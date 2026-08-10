@@ -10,10 +10,13 @@ DEBUG = 'RENDER' not in os.environ
 
 ALLOWED_HOSTS = ['*']
 
-# Permite que o Render gerencie o hostname de forma segura
+# Configuração de hosts e CSRF para o Render (Resolve bloqueios de login em HTTPS)
+CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
+
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
 INSTALLED_APPS = [
     # Django
@@ -65,11 +68,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'acuramed.wsgi.application'
 
-# Configuração do Banco de Dados: usa PostgreSQL no Render e SQLite3 localmente
+# Configuração do Banco de Dados:
+# Se existir a variável DATABASE_URL no Render, usa o Supabase PostgreSQL.
+# Se rodar localmente sem a variável, usa o db.sqlite3.
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600
+        conn_max_age=600,
+        ssl_require='DATABASE_URL' in os.environ
     )
 }
 
@@ -92,9 +98,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Obrigatório para o collectstatic funcionar
-
-# Armazenamento otimizado do WhiteNoise
+STATIC_ROOT = BASE_DIR / 'staticfiles'  
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
