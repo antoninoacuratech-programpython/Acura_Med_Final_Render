@@ -1,0 +1,124 @@
+<div class="p-4 md:p-8" id="colaboradoresPage"
+    data-url-cadastrar="{% url 'cadastrar_utilizador' %}"
+    data-url-detalhe-template="{% url 'detalhe_utilizador' 999999999 %}"
+    data-url-atualizar-template="{% url 'atualizar_utilizador' 999999999 %}"
+    data-url-status-template="{% url 'alternar_status_utilizador' 999999999 %}"
+    data-url-eliminar-template="{% url 'eliminar_utilizador' 999999999 %}">
+
+    <!-- Cabeçalho -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-xl md:text-2xl font-semibold text-text-main">Colaboradores</h1>
+            <p class="text-sm text-gray-500 mt-1">Gestão de utilizadores, acessos e perfis atribuídos.</p>
+        </div>
+
+        <button type="button" id="btnNovoUtilizador"
+            class="inline-flex items-center justify-center gap-2 bg-orange text-white text-sm font-medium px-5 py-3 rounded-xl shadow-md transition-all cursor-pointer hover:opacity-90">
+            <i class="fa-solid fa-user-plus"></i>
+            Novo Utilizador
+        </button>
+    </div>
+
+    <!-- Barra de pesquisa -->
+    <div class="bg-card rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
+        <div class="relative max-w-sm">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="pesquisaUtilizador" placeholder="Pesquisar por nome ou email..."
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-orange focus:ring-2 focus:ring-orange/20 outline-none transition-all text-sm placeholder:text-gray-400">
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                    <tr>
+                        <th class="px-5 py-3 font-medium">Utilizador</th>
+                        <th class="px-5 py-3 font-medium">Hospital</th>
+                        <th class="px-5 py-3 font-medium">Perfil</th>
+                        <th class="px-5 py-3 font-medium">Departamento</th>
+                        <th class="px-5 py-3 font-medium">Status</th>
+                        <th class="px-5 py-3 font-medium text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaUtilizadores" class="divide-y divide-gray-100">
+                    {% for utilizador in utilizadores %}
+                    <tr class="hover:bg-gray-50/60 transition-colors linha-utilizador"
+                        data-id="{{ utilizador.id }}"
+                        data-nome="{{ utilizador.nome_completo|lower }}"
+                        data-email="{{ utilizador.email|lower }}">
+
+                        <td class="px-5 py-3">
+                            <div class="flex items-center gap-3">
+                                {% if utilizador.fotografia %}
+                                <img src="{{ utilizador.fotografia.url }}" alt="{{ utilizador.nome_completo }}"
+                                    class="w-9 h-9 rounded-full object-cover border border-gray-100">
+                                {% else %}
+                                <div class="w-9 h-9 rounded-full bg-orange/10 text-orange flex items-center justify-center font-medium text-xs">
+                                    {{ utilizador.primeiro_nome|slice:":1" }}{{ utilizador.ultimo_nome|slice:":1" }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <p class="font-medium text-text-main">{{ utilizador.nome_completo }}</p>
+                                    <p class="text-xs text-gray-400">{{ utilizador.email }}</p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="px-5 py-3 text-gray-600">{{ utilizador.hospital.nome|default:"—" }}</td>
+                        <td class="px-5 py-3 text-gray-600">{{ utilizador.perfil.nome|default:"—" }}</td>
+                        <td class="px-5 py-3 text-gray-600">{{ utilizador.departamento.nome|default:"—" }}</td>
+
+                        <td class="px-5 py-3">
+                            {% if utilizador.is_active %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green/10 text-green">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green"></span> Ativo
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Inativo
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-5 py-3">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button type="button" title="Editar" data-action="editar" data-id="{{ utilizador.id }}"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-orange hover:bg-orange/10 transition-all cursor-pointer">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+
+                                <button type="button" title="{% if utilizador.is_active %}Desativar{% else %}Ativar{% endif %}"
+                                    data-action="status" data-id="{{ utilizador.id }}"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-all cursor-pointer">
+                                    <i class="fa-solid {% if utilizador.is_active %}fa-toggle-on{% else %}fa-toggle-off{% endif %} text-xs"></i>
+                                </button>
+
+                                <button type="button" title="Eliminar" data-action="eliminar" data-id="{{ utilizador.id }}"
+                                    data-nome="{{ utilizador.nome_completo }}"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr id="linhaVazia">
+                        <td colspan="6" class="px-5 py-12 text-center text-gray-400 text-sm">
+                            <i class="fa-solid fa-users-slash text-2xl mb-3 block"></i>
+                            Nenhum utilizador cadastrado ainda.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <p id="semResultadoPesquisa" class="hidden px-5 py-10 text-center text-gray-400 text-sm">
+            Nenhum utilizador encontrado para essa pesquisa.
+        </p>
+    </div>
+</div>
+
+{% include "colaboradores/modal.html" %}

@@ -1,0 +1,115 @@
+{% load static %}
+
+<section class="panel" id="permissoesPanel">
+
+    <div class="content-card bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 mb-4 border-b border-gray-100">
+
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Permissões</h3>
+                <p class="text-sm text-gray-500 mt-1">Ações do sistema que podem ser atribuídas a um perfil.</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="relative flex items-center">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 text-gray-400"></i>
+                    <input id="pesquisaPermissao" type="search" placeholder="Pesquisar permissão" autocomplete="off"
+                           class="w-full sm:w-auto pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm outline-none
+                                  focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all">
+                </div>
+
+                <button type="button" onclick="abrirModalPermissao()"
+                        class="flex items-center gap-2 bg-[#F36A2D] text-white hover:opacity-90 px-5 py-2 rounded-full font-medium text-sm transition shadow-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    Nova Permissão
+                </button>
+            </div>
+
+        </div>
+
+        <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table class="w-full text-sm min-w-[560px]">
+                <thead>
+                    <tr class="border-b border-gray-100">
+                        <th class="text-left px-3 sm:px-4 py-3 font-semibold text-gray-600">Nome</th>
+                        <th class="text-left px-3 sm:px-4 py-3 font-semibold text-gray-600">Código</th>
+                        <th class="hidden sm:table-cell text-left px-4 py-3 font-semibold text-gray-600">Descrição</th>
+                        <th class="text-left px-3 sm:px-4 py-3 font-semibold text-gray-600">Estado</th>
+                        <th class="text-right px-3 sm:px-4 py-3 font-semibold text-gray-600">Ação</th>
+                    </tr>
+                </thead>
+
+                <tbody id="permissoes-table-body" class="divide-y divide-gray-100">
+
+                    {% for permissao in permissoes %}
+                    <tr class="permissao-row hover:bg-gray-50 transition"
+                        data-search="{{ permissao.nome }} {{ permissao.codigo }}" data-id="{{ permissao.id }}">
+
+                        <td class="px-3 sm:px-4 py-4">
+                            <span class="font-medium text-gray-800">{{ permissao.nome }}</span>
+                        </td>
+
+                        <td class="px-3 sm:px-4 py-4">
+                            <code class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">{{ permissao.codigo }}</code>
+                        </td>
+
+                        <td class="hidden sm:table-cell px-4 py-4 text-gray-600 max-w-xs truncate">
+                            {{ permissao.descricao|default:"—" }}
+                        </td>
+
+                        <td class="px-3 sm:px-4 py-4">
+                            {% if permissao.ativo %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-2"></span> Ativa
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-medium">
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-2"></span> Inativa
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-3 sm:px-4 py-4">
+                            <div class="flex justify-end items-center gap-1.5 sm:gap-2">
+                                <button type="button" title="Editar permissão" onclick="editarPermissao({{ permissao.id }})"
+                                        class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-orange-50 text-orange-600
+                                               hover:bg-orange-500 hover:text-white transition">
+                                    <i class="fa-solid fa-pen text-xs sm:text-sm"></i>
+                                </button>
+                                <button type="button" title="Eliminar permissão" onclick="eliminarPermissao(this, {{ permissao.id }})"
+                                        class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-red-50 text-red-600
+                                               hover:bg-red-500 hover:text-white transition">
+                                    <i class="fa-solid fa-trash-can text-xs sm:text-sm"></i>
+                                </button>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                    <i class="fa-solid fa-key text-gray-400 text-2xl"></i>
+                                </div>
+                                <h4 class="font-semibold text-gray-700">Nenhuma permissão cadastrada</h4>
+                                <p class="text-sm text-gray-400 mt-1">Cria a primeira permissão do sistema.</p>
+                                <button type="button" onclick="abrirModalPermissao()"
+                                        class="flex items-center gap-2 bg-[#F36A2D] text-white hover:opacity-90 px-5 py-2 rounded-full font-medium text-sm transition shadow-sm">
+                                    <i class="fa-solid fa-plus mr-1"></i> Criar permissão
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</section>
+
+{% include "permissoes/modal.html" %}

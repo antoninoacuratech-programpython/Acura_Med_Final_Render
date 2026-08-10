@@ -1,0 +1,138 @@
+{% load static %}
+<section class="panel" id="configuracoesPanel">
+<div class="settings-container">
+<!-- Abas de Configurações -->
+<div class="settings-tabs">
+<button class="tab-btn active" data-tab="editarPerfil">Editar perfil</button>
+<button class="tab-btn" data-tab="dadosFiscais">Dados Fiscais</button>
+<button class="tab-btn" data-tab="seguranca">Segurança</button>
+</div>
+<div class="settings-content">
+<!-- Aba 1: Editar Perfil -->
+<div class="tab-pane active" id="editarPerfil">
+<div class="profile-avatar-container">
+<div class="avatar-box">
+<img alt="Avatar" src="{% static 'icons/acuramed-icon.png' %}"/>
+<span class="edit-icon"><i class="fa-solid fa-pen"></i></span>
+</div>
+</div>
+<div class="form-grid">
+<div class="input-group">
+<label>Nome empresa</label>
+<input placeholder="IACC" type="text"/>
+</div>
+<div class="input-group">
+<label>Usuario principal</label>
+<input placeholder="Francisco, Admin" type="text"/>
+</div>
+<div class="input-group">
+<label>Email</label>
+<input placeholder="iacc@gmail.com" type="email"/>
+</div>
+<div class="input-group">
+<label>Palavra passe</label>
+<input placeholder="123456789" type="password"/>
+</div>
+<div class="input-group">
+<label>Data da fundação</label>
+<input placeholder="25 Janeiro 2000" type="text"/>
+</div>
+<div class="input-group">
+<label>Endereço</label>
+<input placeholder="Talatona, Luanda, Angola" type="text"/>
+</div>
+<div class="input-group">
+<label>Central</label>
+<input placeholder="Talatona, Luanda, Angola" type="text"/>
+</div>
+<div class="input-group">
+<label>Cidade</label>
+<input placeholder="Luanda" type="text"/>
+</div>
+<div class="input-group">
+<label>NIF:</label>
+<input placeholder="45962" type="text"/>
+</div>
+<div class="input-group">
+<label>Pais</label>
+<input placeholder="Angola" type="text"/>
+</div>
+</div>
+<div class="form-action">
+<button class="btn-save">Salvar</button>
+</div>
+</div>
+<!-- Aba 2: Dados Fiscais -->
+<div class="tab-pane" id="dadosFiscais">
+<div class="profile-avatar-container">
+<div class="avatar-box">
+<img alt="Avatar" src="{% static 'icons/acuramed-icon.png' %}"/>
+<span class="edit-icon"><i class="fa-solid fa-pen"></i></span>
+</div>
+</div>
+<div class="form-grid single-column">
+<div class="input-group">
+<label>Chave privada</label>
+<input placeholder="H353KL" type="text"/>
+</div>
+<div class="input-group">
+<label>Chave publica</label>
+<input placeholder="LSW231" type="text"/>
+</div>
+<div class="input-group">
+<label>Regime</label>
+<select>
+<option selected="">Selecione a opção</option>
+<option>Regime Geral</option>
+<option>Regime Simplificado</option>
+</select>
+</div>
+<div class="input-group">
+<label>Retenções</label>
+<input placeholder="XXXXXXXXX" type="text"/>
+</div>
+</div>
+<div class="form-action">
+<button class="btn-save">Salvar</button>
+</div>
+</div>
+<!-- Aba 3: Segurança -->
+<div class="tab-pane" id="seguranca">
+<div class="profile-avatar-container">
+<div class="avatar-box">
+<img alt="Avatar" src="{% static 'icons/acuramed-icon.png' %}"/>
+<span class="edit-icon"><i class="fa-solid fa-pen"></i></span>
+</div>
+</div>
+<div class="security-options">
+<div class="security-row">
+<span>Two-factor Authentication</span>
+<label class="switch">
+<input checked="" type="checkbox"/>
+<span class="slider round"></span>
+</label>
+</div>
+<p class="sec-label">Habilitar Autenticação em dois factores</p>
+</div>
+<div class="form-grid single-column security-pass-box">
+<h4 class="security-pass-title">Alterar Palavra-passe</h4>
+<div class="input-group">
+<label>Palavra-passe atual</label>
+<input placeholder="**********" type="password"/>
+</div>
+<div class="input-group">
+<label>Nova palavra-passe</label>
+<input placeholder="**********" type="password"/>
+</div>
+<div class="input-group">
+<label>Confirmar palavra-passe</label>
+<input placeholder="**********" type="password"/>
+</div>
+</div>
+<div class="form-action">
+<button class="btn-save">Salvar</button>
+</div>
+</div>
+</div>
+</div>
+</section>

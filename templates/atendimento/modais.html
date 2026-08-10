@@ -1,0 +1,106 @@
+{% load static %}
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-atendimento">
+<div class="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<!-- Modal Header -->
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-user-plus text-lg"></i>
+<h3 class="font-bold text-lg">Novo Atendimento</h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeAtendimentoModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<!-- Modal Form Content -->
+<form class="p-6 space-y-5 max-h-[80vh] overflow-y-auto" id="form-novo-atendimento" onsubmit="submitAtendimento(event)">
+<!-- 1. Pesquisa / Selecionar o Paciente -->
+<div class="space-y-1.5 relative">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Pesquisar
+                        Paciente</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+<i class="fa-solid fa-magnifying-glass text-xs"></i>
+</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#F36A2D]" id="input-search-paciente" oninput="filterPatients(this.value)" placeholder="Digite o nome do paciente..." type="text"/>
+</div>
+<!-- Dropdown list of searchable patients -->
+<div class="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg hidden max-h-40 overflow-y-auto" id="patient-dropdown">
+<div class="px-4 py-2.5 hover:bg-orange-50 cursor-pointer text-sm text-gray-700 border-b border-gray-50" onclick="selectPatient('Francisco Antonio', 'Jonathan Antonio')">
+<span class="font-medium">Francisco Antonio</span> <span class="text-xs text-gray-400 block">Resp: Jonathan Antonio</span>
+</div>
+<div class="px-4 py-2.5 hover:bg-orange-50 cursor-pointer text-sm text-gray-700 border-b border-gray-50" onclick="selectPatient('George Campos Maria Dante', 'Lourdes Maria')">
+<span class="font-medium">George Campos Maria Dante</span> <span class="text-xs text-gray-400 block">Resp: Lourdes Maria</span>
+</div>
+<div class="px-4 py-2.5 hover:bg-orange-50 cursor-pointer text-sm text-gray-700" onclick="selectPatient('Bernardo Carlos Macedo', 'Francisco Carlos Macedo')">
+<span class="font-medium">Bernardo Carlos Macedo</span> <span class="text-xs text-gray-400 block">Resp: Francisco Carlos Macedo</span>
+</div>
+</div>
+</div>
+<!-- Selected Patient Indicator -->
+<div class="hidden bg-orange-50 border border-orange-200 rounded-xl p-3 flex items-center justify-between text-sm" id="selected-patient-card">
+<div>
+<span class="text-xs text-orange-600 font-semibold uppercase block">Paciente Selecionado</span>
+<span class="font-bold text-gray-800" id="selected-patient-name"></span>
+</div>
+<button class="text-gray-400 hover:text-red-500" onclick="clearSelectedPatient()" type="button">
+<i class="fa-solid fa-trash-can text-xs"></i>
+</button>
+</div>
+<!-- 2. Escolher os Planos (Convênio vs Particular) -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo de
+                        Plano</label>
+<div class="grid grid-cols-2 gap-4">
+<label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#F36A2D] transition has-[:checked]:border-[#F36A2D] has-[:checked]:bg-orange-50/50">
+<input checked="" class="text-[#F36A2D] focus:ring-[#F36A2D]" name="tipo_plano" onchange="togglePlanoOptions()" type="radio" value="convenio"/>
+<span class="text-sm font-medium text-gray-700">Convênio</span>
+</label>
+<label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#F36A2D] transition has-[:checked]:border-[#F36A2D] has-[:checked]:bg-orange-50/50">
+<input class="text-[#F36A2D] focus:ring-[#F36A2D]" name="tipo_plano" onchange="togglePlanoOptions()" type="radio" value="particular"/>
+<span class="text-sm font-medium text-gray-700">Particular</span>
+</label>
+</div>
+</div>
+<!-- Sub-options for Convênio -->
+<div class="space-y-1.5 pl-2 border-l-2 border-[#F36A2D]" id="convenio-options">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Subtipo de
+                        Convênio</label>
+<select class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="subtipo_convenio">
+<option value="empresa">Empresa</option>
+<option value="seguradora">Seguradora</option>
+</select>
+</div>
+<!-- 3. Campo Prioridade -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Prioridade</label>
+<select class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="prioridade">
+<option value="Normal">Normal</option>
+<option value="Urgente">Urgente</option>
+<option value="Preferencial">Preferencial (Idosos/Gestantes)</option>
+<option value="Emergência">Emergência</option>
+</select>
+</div>
+<!-- 4. Tipo de Atendimento -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo de
+                        Atendimento</label>
+<select class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="tipo_atendimento">
+<option value="Consulta Geral">Consulta Geral</option>
+<option value="Especialidade">Especialidade Médica</option>
+<option value="Exames Laboratoriais">Exames Laboratoriais</option>
+<option value="Triagem / Urgência">Triagem / Urgência</option>
+<option value="Retorno">Retorno</option>
+</select>
+</div>
+<!-- Modal Actions -->
+<div class="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
+<button class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" onclick="closeAtendimentoModal()" type="button">
+                        Cancelar
+                    </button>
+<button class="px-6 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm" type="submit">
+                        Concluir Atendimento
+                    </button>
+</div>
+</form>
+</div>
+</div>

@@ -1,0 +1,112 @@
+<div class="p-4 md:p-8" id="agendamentosPage"
+    data-url-cadastrar="{% url 'cadastrar_agendamento' %}"
+    data-url-detalhe-template="{% url 'detalhe_agendamento' 999999999 %}"
+    data-url-atualizar-template="{% url 'atualizar_agendamento' 999999999 %}"
+    data-url-status-template="{% url 'atualizar_status_agendamento' 999999999 %}"
+    data-url-eliminar-template="{% url 'eliminar_agendamento' 999999999 %}">
+
+    <!-- Cabeçalho -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-xl md:text-2xl font-semibold text-text-main">Agendamentos</h1>
+            <p class="text-sm text-gray-500 mt-1">Consultas marcadas, confirmadas e o respetivo status.</p>
+        </div>
+
+        <button type="button" id="btnNovoAgendamento"
+            class="inline-flex items-center justify-center gap-2 bg-orange text-white text-sm font-medium px-5 py-3 rounded-xl shadow-md transition-all cursor-pointer hover:opacity-90">
+            <i class="fa-solid fa-calendar-plus"></i>
+            Novo Agendamento
+        </button>
+    </div>
+
+    {% if sem_hospital %}
+    <div class="bg-amber-50 border border-amber-100 text-amber-700 text-sm rounded-2xl px-5 py-4 mb-6 flex items-center gap-3">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        A sua conta não tem um hospital associado — não é possível ver nem marcar agendamentos. Contacte um administrador.
+    </div>
+    {% endif %}
+
+    <!-- Barra de pesquisa -->
+    <div class="bg-card rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
+        <div class="relative max-w-sm">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="pesquisaAgendamento" placeholder="Pesquisar por paciente ou profissional..."
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-orange focus:ring-2 focus:ring-orange/20 outline-none transition-all text-sm placeholder:text-gray-400">
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                    <tr>
+                        <th class="px-5 py-3 font-medium">Paciente</th>
+                        <th class="px-5 py-3 font-medium">Profissional</th>
+                        <th class="px-5 py-3 font-medium">Data / Hora</th>
+                        <th class="px-5 py-3 font-medium">Motivo</th>
+                        <th class="px-5 py-3 font-medium">Status</th>
+                        <th class="px-5 py-3 font-medium text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaAgendamentos" class="divide-y divide-gray-100">
+                    {% for agendamento in agendamentos %}
+                    <tr class="hover:bg-gray-50/60 transition-colors linha-agendamento"
+                        data-id="{{ agendamento.id }}"
+                        data-paciente="{{ agendamento.paciente|lower }}"
+                        data-profissional="{{ agendamento.profissional.nome_completo|lower }}">
+
+                        <td class="px-5 py-3 font-medium text-text-main">{{ agendamento.paciente }}</td>
+                        <td class="px-5 py-3 text-gray-600">{{ agendamento.profissional.nome_completo }}</td>
+                        <td class="px-5 py-3 text-gray-600">{{ agendamento.data_hora|date:"d/m/Y H:i" }}</td>
+                        <td class="px-5 py-3 text-gray-600">{{ agendamento.motivo }}</td>
+
+                        <td class="px-5 py-3">
+                            <select data-action="status" data-id="{{ agendamento.id }}"
+                                class="status-select text-xs font-medium rounded-full border-0 pl-3 pr-7 py-1.5 outline-none cursor-pointer
+                                    {% if agendamento.status == 'agendado' %}bg-blue-50 text-blue-600
+                                    {% elif agendamento.status == 'confirmado' %}bg-sky-50 text-sky-600
+                                    {% elif agendamento.status == 'em_atendimento' %}bg-amber-50 text-amber-600
+                                    {% elif agendamento.status == 'concluido' %}bg-green/10 text-green
+                                    {% elif agendamento.status == 'cancelado' %}bg-red-50 text-red-600
+                                    {% else %}bg-gray-100 text-gray-500{% endif %}">
+                                {% for valor, rotulo in status_choices %}
+                                <option value="{{ valor }}" {% if agendamento.status == valor %}selected{% endif %}>{{ rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+
+                        <td class="px-5 py-3">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button type="button" title="Editar" data-action="editar" data-id="{{ agendamento.id }}"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-orange hover:bg-orange/10 transition-all cursor-pointer">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+
+                                <button type="button" title="Eliminar" data-action="eliminar" data-id="{{ agendamento.id }}"
+                                    data-descricao="{{ agendamento.paciente }} - {{ agendamento.data_hora|date:'d/m/Y H:i' }}"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr id="linhaVazia">
+                        <td colspan="6" class="px-5 py-12 text-center text-gray-400 text-sm">
+                            <i class="fa-solid fa-calendar-xmark text-2xl mb-3 block"></i>
+                            Nenhum agendamento cadastrado ainda.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <p id="semResultadoPesquisa" class="hidden px-5 py-10 text-center text-gray-400 text-sm">
+            Nenhum agendamento encontrado para essa pesquisa.
+        </p>
+    </div>
+</div>
+
+{% include "agendamentos/modal.html" %}

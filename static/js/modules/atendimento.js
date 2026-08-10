@@ -1,0 +1,10 @@
+window.moduleInitializers=window.moduleInitializers||{};
+let currentSelectedPatient=null,currentSelectedResponsavel=null;
+window.openAtendimentoModal=()=>document.getElementById("modal-atendimento")?.classList.remove("hidden");
+window.closeAtendimentoModal=()=>{document.getElementById("modal-atendimento")?.classList.add("hidden");document.getElementById("form-novo-atendimento")?.reset();clearSelectedPatient();};
+window.togglePlanoOptions=()=>{const v=document.querySelector('input[name="tipo_plano"]:checked')?.value;document.getElementById("convenio-options")?.classList.toggle("hidden",v!=="convenio");};
+window.filterPatients=q=>document.getElementById("patient-dropdown")?.classList.toggle("hidden",!q.trim());
+window.selectPatient=(name,resp)=>{currentSelectedPatient=name;currentSelectedResponsavel=resp;document.getElementById("input-search-paciente").value=name;document.getElementById("selected-patient-name").textContent=`${name} (Resp: ${resp})`;document.getElementById("selected-patient-card").classList.remove("hidden");document.getElementById("patient-dropdown").classList.add("hidden");};
+window.clearSelectedPatient=()=>{currentSelectedPatient=null;currentSelectedResponsavel=null;const i=document.getElementById("input-search-paciente");if(i)i.value="";document.getElementById("selected-patient-card")?.classList.add("hidden");};
+window.submitAtendimento=e=>{e.preventDefault();if(!currentSelectedPatient){showToast("Selecione um paciente.","error");return;}const tbody=document.getElementById("patient-table-body");if(tbody){const tr=document.createElement("tr");tr.innerHTML=`<td class="py-4 px-4 font-medium">${currentSelectedPatient}</td><td class="py-4 px-4 text-gray-500">${currentSelectedResponsavel}</td><td class="py-4 px-4 text-right"><button class="bg-[#2D3250] text-white text-xs px-4 py-2 rounded-lg font-medium">Atender</button></td>`;tbody.prepend(tr);}closeAtendimentoModal();showToast("Atendimento registado.");};
+window.moduleInitializers.atendimento=function(){togglePlanoOptions();};

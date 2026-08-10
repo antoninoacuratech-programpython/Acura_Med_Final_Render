@@ -1,0 +1,172 @@
+{% load static %}
+
+<section class="panel" id="pacientesPanel">
+
+    <div class="content-card bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+
+        <!-- CABEÇALHO -->
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 mb-4 border-b border-gray-100">
+
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Lista de Pacientes</h3>
+                <p class="text-sm text-gray-500 mt-1">Pacientes cadastrados neste hospital.</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+
+                <div class="relative flex items-center">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 text-gray-400"></i>
+                    <input id="pesquisaPaciente" type="search" placeholder="Pesquisar paciente" autocomplete="off"
+                           class="w-full sm:w-auto pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm outline-none
+                                  focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all">
+                </div>
+
+                <a href="{% url 'relatorio_pacientes_pdf' %}"
+                   class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium text-sm px-4 py-2 rounded-xl
+                          shadow-sm transition-all flex items-center justify-center gap-2 shrink-0">
+                    <i class="fa-solid fa-file-pdf text-red-500"></i>
+                    Exportar PDF
+                </a>
+
+               
+                 <button type="button" onclick="abrirModal()"
+                        class="flex items-center gap-2 bg-[#F36A2D] text-white hover:opacity-90 px-5 py-2 rounded-full font-medium text-sm transition shadow-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    Novo Paciente
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- TABELA -->
+
+        <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+
+            <table class="w-full text-sm min-w-[560px]">
+
+                <thead>
+                    <tr class="border-b border-gray-100">
+                        <th class="text-left px-3 sm:px-4 py-3 font-semibold text-gray-600">ID</th>
+                        <th class="text-left px-3 sm:px-4 py-3 font-semibold text-gray-600">Nome Completo</th>
+                        <th class="hidden md:table-cell text-left px-4 py-3 font-semibold text-gray-600">Género</th>
+                        <th class="hidden lg:table-cell text-left px-4 py-3 font-semibold text-gray-600">Data de Nascimento</th>
+                        <th class="hidden sm:table-cell text-left px-4 py-3 font-semibold text-gray-600">Estado</th>
+                        <th class="text-right px-3 sm:px-4 py-3 font-semibold text-gray-600">Ação</th>
+                    </tr>
+                </thead>
+
+                <tbody id="pacientes-table-body" class="divide-y divide-gray-100">
+
+                    {% for paciente in pacientes %}
+                    <tr class="paciente-row hover:bg-gray-50 transition"
+                        data-search="{{ paciente.codigo }} {{ paciente.primeiro_nome }} {{ paciente.ultimo_nome }}"
+                        data-codigo="{{ paciente.codigo }}">
+
+                        <td class="px-3 sm:px-4 py-4">
+                            <span class="font-semibold text-gray-700">{{ paciente.codigo }}</span>
+                        </td>
+
+                        <td class="px-3 sm:px-4 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 shrink-0 rounded-full bg-orange-100 text-orange-600 flex items-center
+                                            justify-center font-semibold">
+                                    {{ paciente.primeiro_nome|first|upper }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="font-medium text-gray-800 truncate">
+                                        {{ paciente.primeiro_nome }} {{ paciente.ultimo_nome }}
+                                    </p>
+                                    <!-- Género visível só em mobile, já que a coluna fica escondida -->
+                                    <p class="md:hidden text-xs text-gray-400">
+                                        {% if paciente.sexo == "M" %}Masculino
+                                        {% elif paciente.sexo == "F" %}Feminino
+                                        {% else %}Não informado
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="hidden md:table-cell px-4 py-4 text-gray-600">
+                            {% if paciente.sexo == "M" %}Masculino
+                            {% elif paciente.sexo == "F" %}Feminino
+                            {% else %}Não informado
+                            {% endif %}
+                        </td>
+
+                        <td class="hidden lg:table-cell px-4 py-4 text-gray-600">
+                            {% if paciente.data_nascimento %}
+                                {{ paciente.data_nascimento|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="text-gray-400">Não informado</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="hidden sm:table-cell px-4 py-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700
+                                         text-xs font-medium">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-2"></span>
+                                Ativo
+                            </span>
+                        </td>
+
+                        <td class="px-3 sm:px-4 py-4">
+                            <div class="flex justify-end items-center gap-1.5 sm:gap-2">
+
+                                <button type="button" title="Visualizar paciente"
+                                        onclick="visualizarPaciente('{{ paciente.codigo }}')"
+                                        class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600
+                                               hover:bg-blue-600 hover:text-white transition">
+                                    <i class="fa-solid fa-eye text-xs sm:text-sm"></i>
+                                </button>
+
+                                <button type="button" title="Editar paciente"
+                                        onclick="editarPaciente('{{ paciente.codigo }}')"
+                                        class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-orange-50 text-orange-600
+                                               hover:bg-orange-500 hover:text-white transition">
+                                    <i class="fa-solid fa-pen text-xs sm:text-sm"></i>
+                                </button>
+
+                                <button type="button" title="Eliminar paciente"
+                                        onclick="eliminarPaciente(this, '{{ paciente.codigo }}')"
+                                        class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-red-50 text-red-600
+                                               hover:bg-red-500 hover:text-white transition">
+                                    <i class="fa-solid fa-trash-can text-xs sm:text-sm"></i>
+                                </button>
+
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                    <i class="fa-solid fa-hospital-user text-gray-400 text-2xl"></i>
+                                </div>
+                                <h4 class="font-semibold text-gray-700">Nenhum paciente cadastrado</h4>
+                                <p class="text-sm text-gray-400 mt-1">Ainda não existem pacientes neste hospital.</p>
+                                <button type="button" onclick="abrirModal()"
+                                        class="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-sm">
+                                    <i class="fa-solid fa-plus mr-1"></i>
+                                    Cadastrar paciente
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% include "pacientes/modais.html" %}

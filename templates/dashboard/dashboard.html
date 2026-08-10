@@ -1,0 +1,6 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}ACURA MED - Dashboard{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/modules/dashboard.css' %}">{% endblock %}
+{% block workspace %}{% include "dashboard/painel.html" %}{% endblock %}
+{% block extra_js %}<script src="{% static 'js/modules/dashboard.js' %}"></script>{% endblock %}

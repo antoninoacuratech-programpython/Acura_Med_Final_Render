@@ -1,0 +1,89 @@
+{% load static %}
+
+<div id="modalPerfil" class="hidden fixed inset-0 z-[100] flex items-center justify-center
+           bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+
+    <div class="relative w-full h-full sm:h-auto sm:max-w-2xl sm:max-h-[95vh]
+               overflow-hidden bg-white sm:rounded-2xl shadow-2xl flex flex-col">
+
+        <div class="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 shrink-0">
+            <div>
+                <h2 id="modalPerfilTitulo" class="text-lg sm:text-xl font-semibold text-gray-800">Novo Perfil</h2>
+                <p class="text-sm text-gray-500 mt-1">Define o nome e as permissões deste perfil de acesso.</p>
+            </div>
+            <button type="button" onclick="fecharModalPerfil()"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400
+                           hover:bg-gray-100 hover:text-gray-700 transition shrink-0">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="overflow-y-auto flex-1 px-4 sm:px-6 py-6">
+
+            <p id="modalPerfilErro" class="text-red-500 text-sm mb-4 hidden"></p>
+
+            <form id="formPerfil" method="POST"
+                  data-url-criar="{% url 'cadastrar_perfil' %}"
+                  data-url-atualizar-template="{% url 'atualizar_perfil' 999999999 %}"
+                  action="{% url 'cadastrar_perfil' %}"
+                  onsubmit="submitPerfil(event)" class="space-y-6">
+
+                {% csrf_token %}
+                <input type="hidden" id="perfil_id" name="perfil_id" value="">
+
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label for="perfil_nome" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nome do Perfil <span class="text-red-500">*</span>
+                        </label>
+                        <input id="perfil_nome" name="perfil_nome" type="text" required
+                               placeholder="Ex.: Recepcionista"
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800
+                                      outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition">
+                    </div>
+
+                    <div>
+                        <label for="perfil_descricao" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Descrição
+                        </label>
+                        <textarea id="perfil_descricao" name="perfil_descricao" rows="2"
+                                  placeholder="Descreve para que serve este perfil (opcional)"
+                                  class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800
+                                         outline-none resize-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition"></textarea>
+                    </div>
+
+                    <label class="flex items-center gap-2 cursor-pointer w-fit">
+                        <input type="checkbox" id="perfil_ativo" name="perfil_ativo" checked
+                               class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400">
+                        <span class="text-sm text-gray-700">Perfil ativo</span>
+                    </label>
+                </div>
+
+                <div class="border-t border-gray-100 pt-5">
+                    <h3 class="text-base font-semibold text-gray-800 mb-1">Permissões</h3>
+                    <p class="text-sm text-gray-500 mb-3">Marca as permissões que este perfil deve ter.</p>
+
+                    <div id="listaPermissoesPerfil" class="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                        <p class="p-4 text-sm text-gray-400">A carregar permissões…</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-end items-stretch sm:items-center
+                            gap-3 pt-5 border-t border-gray-100">
+                    <button type="button" onclick="fecharModalPerfil()"
+                            class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium
+                                   hover:bg-gray-50 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnSalvarPerfil"
+                            class="flex items-center gap-2 bg-[#F36A2D] text-white hover:opacity-90 px-5 py-2 rounded-full font-medium text-sm transition shadow-sm">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span id="btnSalvarPerfilTexto">Criar Perfil</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</div>

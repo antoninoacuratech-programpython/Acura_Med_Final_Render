@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ACURA MED{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: { dark: '#2D3250' }, orange: '#F36A2D', green: '#10D941', background: '#C4C5E0', card: '#FFFFFF', 'text-main': '#2D3954' }, fontFamily: { poppins: ['Poppins','sans-serif'] } } }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'css/topbar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/menubar.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="font-poppins text-text-main bg-background">
+    {% include 'base/topbar.html' %}
+    <div class="app-layout">
+        {% include 'base/menubar.html' %}
+        <main id="workspace" class="workspace">
+            {% block workspace %}{% endblock %}
+        </main>
+    </div>
+    <div id="app-toast" class="app-toast" aria-live="polite"></div>
+    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/navigation.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

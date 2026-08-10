@@ -1,0 +1,25 @@
+<aside class="sidebar">
+    <ul class="sidebar-menu">
+        <li class="active"><a href="#" data-module="dashboard" data-title="Visão Geral"><i class="fa-solid fa-house"></i><span>Dashboard</span></a></li>
+        <li><a href="#" data-module="atendimento" data-title="Atendimentos"><i class="fa-solid fa-user-clock"></i><span>Atendimentos</span></a></li>
+        <li><a href="#" data-module="encaminhamento" data-title="Encaminhamentos"><i class="fa-solid fa-share-nodes"></i><span>Encaminhamentos</span></a></li>
+        <li><a href="#" data-module="convenios" data-title="Convênios & Guias"><i class="fa-solid fa-file-shield"></i><span>Convênios & Guias</span></a></li>
+        <li><a href="#" data-module="colaboradores" data-title="Colaboradores"><i class="fa-solid fa-user-group"></i><span>Colaboradores</span></a></li>
+        <li><a href="#" data-module="pacientes" data-title="Pacientes"><i class="fa-solid fa-hospital-user"></i><span>Pacientes</span></a></li>
+        <li><a href="#" data-module="agendamentos" data-title="Agendamentos"><i class="fa-solid fa-calendar-check"></i><span>Agendamentos</span></a></li>
+
+        <li><a href="{% url 'modulo_perfis' %}" data-module="perfis" data-title="Perfis"><i class="fa-solid fa-user-shield"></i><span>Perfis</span></a></li>
+        <li><a href="{% url 'modulo_permissoes' %}" data-module="permissoes" data-title="Permissões"><i class="fa-solid fa-key"></i><span>Permissões</span></a></li>
+    </ul>
+
+    <ul class="sidebar-menu sidebar-menu-bottom">
+        <li>
+            <form id="form-logout" action="{% url 'logout' %}" method="post" style="margin:0;">
+                {% csrf_token %}
+            </form>
+            <a href="#" onclick="document.getElementById('form-logout').submit(); return false;" data-title="Sair">
+                <i class="fa-solid fa-right-from-bracket"></i><span>Sair</span>
+            </a>
+        </li>
+    </ul>
+</aside>

@@ -1,0 +1,33 @@
+{% load static %}
+<header class="topbar">
+    <div class="topbar-brand"><img src="{% static 'icons/acuramed_empty-2.png' %}" alt="ACURA MED"></div>
+    <div class="topbar-title"><h2 id="pageTitle">Visão Geral</h2></div>
+    <div class="topbar-actions">
+        <button class="icon-btn" id="settingsBtn" title="Configurações"><i class="fa-solid fa-gear"></i></button>
+        <div class="notification-container">
+            <button class="icon-btn" id="notificationBtn" title="Notificações"><i class="fa-solid fa-bell"></i></button>
+            <div class="notification-dropdown" id="notificationDropdownMenu">
+                <div class="notification-header"><span>Notificações</span><span class="notification-badge">2 novas</span></div>
+                <div class="notification-list">
+                    <a href="#" class="notification-item unread"><strong>Novo agendamento</strong><br><span>Francisco marcou Fisioterapia.</span></a>
+                    <a href="#" class="notification-item"><strong>Atualização de sistema</strong><br><span>O relatório mensal foi gerado.</span></a>
+                </div>
+                <div class="notification-footer"><a href="#">Ver todas as notificações</a></div>
+            </div>
+        </div>
+        <div class="user-profile-container">
+            <div class="user-profile-pic" id="userMenuBtn"><img src="{% static 'icons/acuramed-icon-white.png' %}" alt="Perfil"></div>
+            <div class="user-dropdown-menu" id="userDropdownMenu">
+                <a href="#" class="dropdown-item" data-module="configuracoes" data-title="Configurações"><i class="fa-solid fa-user-pen"></i> Editar perfil</a>
+                <a href="#" class="dropdown-item" data-module="configuracoes" data-title="Configurações"><i class="fa-solid fa-gear"></i> Configurações</a>
+
+                <form id="form-logout-topbar" action="{% url 'logout' %}" method="post" style="margin:0;">
+                    {% csrf_token %}
+                </form>
+                <a href="#" class="dropdown-item logout" onclick="document.getElementById('form-logout-topbar').submit(); return false;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Terminar sessão
+                </a>
+            </div>
+        </div>
+    </div>
+</header>

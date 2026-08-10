@@ -1,0 +1,51 @@
+{% load static %}
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-convenio">
+<div class="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden transform transition-all">
+<!-- Modal Header -->
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-file-shield text-lg"></i>
+<h3 class="font-bold text-lg">Registar Convênio ou Guia</h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeConvenioModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<!-- Modal Form -->
+<form class="p-6 space-y-5 max-h-[80vh] overflow-y-auto" id="form-novo-convenio" onsubmit="submitConvenio(event)">
+<!-- Empresa / Seguradora -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Empresa /
+                        Seguradora</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="conv-empresa" placeholder="Ex: Global Health Seguros" required="" type="text"/>
+</div>
+<!-- Tipo de Plano -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo de
+                        Plano</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="conv-plano" placeholder="Ex: Plano Saúde Premium" required="" type="text"/>
+</div>
+<!-- Número da Guia / Apólice -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Número da Guia ou
+                        Apólice</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="conv-guia" placeholder="Ex: GH-9928104" required="" type="text"/>
+</div>
+<!-- Validade -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Data de
+                        Validade</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="conv-validade" required="" type="date"/>
+</div>
+<!-- Ações do Modal -->
+<div class="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
+<button class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" onclick="closeConvenioModal()" type="button">
+                        Cancelar
+                    </button>
+<button class="px-6 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm" type="submit">
+                        Salvar Convênio
+                    </button>
+</div>
+</form>
+</div>
+</div>

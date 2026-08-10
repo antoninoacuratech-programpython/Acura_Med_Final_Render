@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ACURAMED - Sistema de Gestão Hospitalar</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-box {
+            display: none;
+        }
+
+        .form-box.active {
+            display: block;
+        }
+
+        body.loading #splash {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #splash {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        @keyframes lineLoad {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            50% {
+                transform: translateX(0%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .animate-line-loader {
+            animation: lineLoad 1.5s infinite ease-in-out;
+        }
+
+        .background-logo {
+            position: absolute;
+            width: min(650px, 80vw);
+            height: auto;
+            opacity: 0.04;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .form-logo {
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body class="loading bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between relative overflow-x-hidden"
+    data-has-error="{% if messages %}1{% else %}0{% endif %}">
+
+    <div id="splash" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-orange-50/50"></div>
+        <div class="relative z-10 flex flex-col items-center gap-8 w-72">
+            <img src="{% static 'icons/acuramed_empty.png' %}" class="w-64 animate-pulse object-contain" alt="ACURA MED">
+            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden relative">
+                <div class="absolute top-0 bottom-0 left-0 w-full bg-orange-500 rounded-full animate-line-loader"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="w-full bg-slate-900 shadow-md py-3 px-4 relative z-20">
+        <div class="w-full flex items-center justify-between">
+            <div class="brand flex items-center">
+                <img src="{% static 'icons/acuramed_empty-2.png' %}" class="h-10 w-auto object-contain filter brightness-0 invert" alt="ACURA MED">
+            </div>
+            <div class="hamburger flex flex-col gap-1.5 cursor-pointer md:hidden pr-2">
+                <span class="w-6 h-0.5 bg-white rounded-full"></span>
+                <span class="w-6 h-0.5 bg-white rounded-full"></span>
+                <span class="w-6 h-0.5 bg-white rounded-full"></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center relative p-4 my-8">
+
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+            <img src="{% static 'icons/acuramed-icon.png' %}" class="background-logo" alt="ACURA MED Background">
+        </div>
+
+        <!-- LOGIN -->
+        <section class="form-box active w-full max-w-lg bg-white p-10 rounded-3xl shadow-xl relative z-10 border border-gray-100" id="loginBox">
+
+            <div class="flex justify-center mb-8">
+                <img src="{% static 'icons/acuramed-icon.png' %}" class="w-20 h-20 object-contain" alt="ACURA MED Icon">
+            </div>
+
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="{% if message.tags == 'success' %}text-emerald-600{% else %}text-red-500{% endif %} text-xs mb-4">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <div class="relative flex items-center mb-5">
+                    <i class="fa-solid fa-envelope absolute left-4 text-gray-400"></i>
+                    <input type="email" name="email" id="loginEmail" placeholder="ex.acuratech@domain.com" required
+                        class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition-all text-sm placeholder:text-gray-400">
+                </div>
+
+                <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                <div class="relative flex items-center mb-3">
+                    <i class="fa-solid fa-lock absolute left-4 text-gray-400"></i>
+                    <input type="password" name="password" id="loginSenha" placeholder="Insira a senha" required
+                        class="w-full pl-11 pr-12 py-3.5 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition-all text-sm placeholder:text-gray-400">
+                    <i class="fa-solid fa-eye toggle-password absolute right-4 text-gray-400 cursor-pointer hover:text-gray-600"></i>
+                </div>
+
+                <div class="flex justify-end mb-6">
+                    <a href="#" class="text-xs font-medium text-orange-600 hover:underline">Esqueci a senha?</a>
+                </div>
+
+                <button class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all text-sm shadow-md cursor-pointer" id="btnLogin" type="submit">
+                    Entrar
+                </button>
+            </form>
+
+            <p class="text-center text-xs text-gray-500 mt-6">
+                Não possui uma conta?
+                <a href="#" id="goCadastro" class="text-orange-600 font-medium hover:underline">Cadastre-se aqui</a>
+            </p>
+        </section>
+
+        <!-- CADASTRO -->
+        <section class="form-box w-full max-w-lg bg-white p-10 rounded-3xl shadow-xl relative z-10 border border-gray-100" id="cadastroBox">
+
+            <div class="flex justify-center mb-8">
+                <img src="{% static 'icons/acuramed-icon.png' %}" class="w-20 h-20 object-contain" alt="ACURA MED Icon">
+            </div>
+
+            <form method="POST" action="{% url 'registro' %}">
+                {% csrf_token %}
+
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                <div class="relative flex items-center mb-5">
+                    <i class="fa-solid fa-user absolute left-4 text-gray-400"></i>
+                    <input type="text" name="nome" id="cadNome" placeholder="Insira o nome" required
+                        class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition-all text-sm placeholder:text-gray-400">
+                </div>
+
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <div class="relative flex items-center mb-5">
+                    <i class="fa-solid fa-envelope absolute left-4 text-gray-400"></i>
+                    <input type="email" name="email" id="cadEmail" placeholder="Insira o email" required
+                        class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition-all text-sm placeholder:text-gray-400">
+                </div>
+
+                <label class="block text-sm font-medium text-gray-700 mb-1">Criar senha</label>
+                <div class="relative flex items-center mb-5">
+                    <i class="fa-solid fa-lock absolute left-4 text-gray-400"></i>
+                    <input type="password" name="password" id="cadastroPassword" placeholder="Crie uma senha" required
+                        class="w-full pl-11 pr-12 py-3.5 rounded-xl border border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition-all text-sm placeholder:text-gray-400">
+                    <i class="fa-solid fa-eye toggle-password absolute right-4 text-gray-400 cursor-pointer hover:text-gray-600"></i>
+                </div>
+
+                <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+                <div class="relative flex items-center mb-6">
+                    <i class="fa-solid fa-lock absolute left-4 text-gray-400"></i>
+                    <input type="password" name="confirm_password" id="confirmPassword" placeholder="Confirmar senha" required
+                        class="w-full pl-11 pr-12 py-3.5 rounded-xl border border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition-all text-sm placeholder:text-gray-400">
+                    <i class="fa-solid fa-eye toggle-password absolute right-4 text-gray-400 cursor-pointer hover:text-gray-600"></i>
+                </div>
+
+                <button class="w-full py-3.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all text-sm shadow-md cursor-pointer" id="btnCadastrar" type="submit">
+                    Criar Conta
+                </button>
+            </form>
+
+            <p class="text-center text-xs text-gray-500 mt-6">
+                Já possui conta?
+                <a href="{% url 'login' %}" id="goLogin" class="text-orange-600 font-medium hover:underline">Fazer Login</a>
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="w-full bg-white border-t border-gray-100 py-4 px-6 text-center text-xs text-gray-500 relative z-20">
+        <p> © 2026<strong class="text-gray-700">ACURA MED</strong>|Developed by
+            <strong class="text-orange-600">ACURATECH</strong>
+            - All Rights Reserved
+        </p>
+    </footer>
+
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.body.classList.remove('loading');
+            }, 3500);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const temErro = document.body.dataset.hasError === '1';
+            if (temErro) {
+                document.getElementById('loginBox').classList.add('active');
+                document.getElementById('cadastroBox').classList.remove('active');
+            }
+        });
+    </script>
+
+    <script src="{% static 'js/script.js' %}"></script>
+
+</body>
+
+</html>
