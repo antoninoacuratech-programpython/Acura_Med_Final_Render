@@ -69,8 +69,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'acuramed.wsgi.application'
 
 # Configuração do Banco de Dados:
-# Se existir a variável DATABASE_URL no Render, usa o Supabase PostgreSQL.
-# Se rodar localmente sem a variável, usa o db.sqlite3.
+# Se existir a variável DATABASE_URL (Render/Neon), utiliza o PostgreSQL do Neon.
+# Caso contrário (desenvolvimento local), utiliza o SQLite3.
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
