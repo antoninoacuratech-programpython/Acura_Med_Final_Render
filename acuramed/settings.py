@@ -67,15 +67,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'acuramed.wsgi.application'
-
-# Configuração do Banco de Dados:
-# Se existir a variável DATABASE_URL (Render/Neon), utiliza o PostgreSQL do Neon.
-# Caso contrário (desenvolvimento local), utiliza o SQLite3.
+# Configuração temporária para testar APENAS a base de dados do Neon (Online)
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    'default': dj_database_url.parse(
+        'postgresql://neondb_owner:npg_q7inUo0RbzxZ@ep-icy-breeze-ay1lg0e1.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require',
         conn_max_age=600,
-        ssl_require='DATABASE_URL' in os.environ
+        ssl_require=True
     )
 }
 

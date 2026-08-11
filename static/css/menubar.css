@@ -43,3 +43,157 @@
     color: #fff;
     box-shadow: 0 8px 18px rgba(243, 106, 45, .22)
 }
+
+.sidebar-menu .has-submenu>.submenu-toggle {
+    cursor: pointer;
+}
+
+.sidebar-menu .submenu {
+    list-style: none;
+    margin: 0;
+    padding-left: .6rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .25s ease;
+}
+
+.sidebar-menu .has-submenu.open>.submenu {
+    max-height: 500px;
+}
+
+.sidebar-menu .submenu-toggle .submenu-arrow {
+    margin-left: auto;
+    font-size: .75rem;
+    transition: transform .2s ease;
+}
+
+.sidebar-menu .has-submenu.open>.submenu-toggle .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+.sidebar-menu .submenu li a {
+    min-height: 40px;
+    font-size: .82rem;
+    color: rgba(255, 255, 255, .65);
+}
+
+.sidebar-menu .submenu li:hover a,
+.sidebar-menu .submenu li.active a {
+    background: var(--primary-dark);
+    color: #fff;
+}
+
+/* =========================================================
+   GRUPOS DO SIDEBAR
+   ========================================================= */
+
+.sidebar-group {
+    list-style: none;
+}
+
+
+/* Botão do submenu */
+
+.sidebar-submenu-toggle {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 12px 14px;
+
+    font: inherit;
+
+    border-radius: 10px;
+
+    transition: background-color .2s ease,
+        color .2s ease;
+}
+
+
+.sidebar-submenu-toggle:hover {
+    background: rgba(59, 130, 246, .08);
+}
+
+
+/* Conteúdo do item */
+
+.sidebar-item-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+
+/* Seta */
+
+.submenu-arrow {
+    font-size: 11px;
+
+    transition: transform .25s ease;
+}
+
+
+/* Submenu */
+
+.sidebar-submenu {
+    display: none;
+
+    margin: 4px 0 6px 0;
+    padding: 0 0 0 20px;
+
+    list-style: none;
+}
+
+
+/* Submenu aberto */
+
+.sidebar-group.open>.sidebar-submenu {
+    display: block;
+}
+
+
+/* Rotação da seta */
+
+.sidebar-group.open .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+
+/* Links internos */
+
+.sidebar-submenu li a {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    padding: 9px 12px;
+
+    font-size: 13px;
+
+    border-radius: 8px;
+
+    color: #6b7280;
+
+    text-decoration: none;
+
+    transition: all .2s ease;
+}
+
+
+.sidebar-submenu li a:hover {
+    color: #f97316;
+    background: #fff7ed;
+}
+
+
+.sidebar-submenu li a i {
+    width: 18px;
+    text-align: center;
+    font-size: 13px;
+}

@@ -1,0 +1,53 @@
+.sidebar-menu .has-submenu>.submenu-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.sidebar-menu .submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+    list-style: none;
+    padding-left: 1rem;
+    margin: 0;
+}
+
+.sidebar-menu .has-submenu.open>.submenu {
+    max-height: 500px;
+}
+
+.sidebar-menu .submenu-toggle .submenu-arrow {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+    font-size: 0.75rem;
+}
+
+.sidebar-menu .has-submenu.open>.submenu-toggle .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+.sidebar-menu .submenu li a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    color: #2D3954;
+    opacity: 0.85;
+    border-radius: 0.5rem;
+    text-decoration: none;
+}
+
+.sidebar-menu .submenu li a:hover {
+    background-color: #C4C5E0;
+    opacity: 1;
+}
+
+.sidebar-menu .submenu li.active a,
+.sidebar-menu .submenu li a.active {
+    color: #F36A2D;
+    background-color: #FFF3ED;
+    opacity: 1;
+    font-weight: 500;
+}
