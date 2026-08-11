@@ -1,165 +1,234 @@
 {% load static %}
 <section class="panel" id="dashboardPanel">
-<!-- Botão de Impressão de Relatório, novo atedimento, novo paciente e Painel Retátil -->
-<div class="dashboard-quick-actions">
-<div class="report-dropdown-wrapper">
-<button class="btn-report" id="reportDropdownBtn">
-<i class="fa-solid fa-print"></i> Impressão de Relatório <i class="fa-solid fa-chevron-down"></i>
-</button>
-<!-- Painel de Opções (Dia, Semanal, Mensal) -->
-<div class="report-options-panel" id="reportOptionsPanel">
-<a href="#"><i class="fa-solid fa-calendar-day day"></i> Relatório do Dia</a>
-<a href="#"><i class="fa-solid fa-calendar-week week"></i> Relatório Semanal</a>
-<a href="#"><i class="fa-solid fa-calendar-days month"></i> Relatório Mensal</a>
-</div>
-</div>
-<button class="dashboard-quick-action" id="btnNovoAtendimento" type="button">
-<i class="fa-solid fa-user-clock"></i>
-                    Novo Atendimento
-                </button>
-<button class="dashboard-quick-action" id="btnNovoPaciente" type="button">
-<i class="fa-solid fa-user-plus"></i>
-                    Novo Paciente
-                </button>
-</div>
-<div class="cards-grid">
-<div class="stat-card">
-<div class="stat-icon green"><i class="fa-solid fa-clipboard-check"></i></div>
-<div class="stat-info">
-<span>Total concluídos</span>
-<h3>150</h3>
-</div>
-</div>
-<div class="stat-card">
-<div class="stat-icon pink"><i class="fa-solid fa-calendar-days"></i></div>
-<div class="stat-info">
-<span>Agendado</span>
-<h3>50</h3>
-</div>
-</div>
-<div class="stat-card">
-<div class="stat-icon blue"><i class="fa-solid fa-spinner"></i></div>
-<div class="stat-info">
-<span>Decorrendo</span>
-<h3>12</h3>
-</div>
-</div>
-<div class="stat-card">
-<div class="stat-icon blue-dark"><i class="fa-solid fa-clock-rotate-left"></i></div>
-<div class="stat-info">
-<span>Remarcados</span>
-<h3>10</h3>
-</div>
-</div>
-</div>
-<!-- Tabela de Atividades -->
-<div class="content-card">
-<div class="card-header-table">
-<h3>Tabela de atividades</h3>
-<div class="table-search">
-<i class="fa-solid fa-magnifying-glass"></i>
-<input placeholder="Pesquisa na tabela" type="text"/>
-</div>
-</div>
-<div class="table-responsive">
-<table>
-<thead>
-<tr>
-<th>N/Atendimento</th>
-<th>Paciente</th>
-<th>Tipo</th>
-<th>Dr/Med/Enf</th>
-<th>Data/Hora</th>
-<th>Duração</th>
-<th>Estado</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1254</td>
-<td>Francisco</td>
-<td>Fisioterapia</td>
-<td>Dr. Luis</td>
-<td>28 Jan, 12.30 AM</td>
-<td>30min 45 seg</td>
-<td><span class="badge green">Concluido</span></td>
-</tr>
-<tr>
-<td>6566</td>
-<td>Mizombo</td>
-<td>Consulta</td>
-<td>Dr. Carlos</td>
-<td>28 Jan, 13.00 AM</td>
-<td>......</td>
-<td><span class="badge orange">Decorrendo</span></td>
-</tr>
-<tr>
-<td>908</td>
-<td>Mauricio</td>
-<td>Fisioterapia</td>
-<td>Dr. Luis</td>
-<td>28 Jan, 14.30 AM</td>
-<td>......</td>
-<td><span class="badge dark">Marcado</span></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<!-- Gráfico de Atendimentos por Dia da Semana -->
-<div class="content-card chart-card-wrapper">
-<div class="card-header-table">
-<h3>Gráfico de Atendimentos por Dia da Semana</h3>
-</div>
-<div class="chart-container">
-<div class="custom-chart">
-<!-- Eixo Y -->
-<div class="chart-y-axis">
-<span>150</span>
-<span>112</span>
-<span>75</span>
-<span>37</span>
-<span>0</span>
-</div>
-<!-- Barras dos Dias da Semana -->
-<div class="chart-bars-wrapper">
-<div class="bar-group">
-<span class="bar-value">90</span>
-<div class="bar-fill blue" style="height: 120px;"></div>
-<span class="bar-label">Segunda</span>
-</div>
-<div class="bar-group">
-<span class="bar-value">110</span>
-<div class="bar-fill blue" style="height: 146px;"></div>
-<span class="bar-label">Terça</span>
-</div>
-<div class="bar-group">
-<span class="bar-value">130</span>
-<div class="bar-fill blue" style="height: 173px;"></div>
-<span class="bar-label">Quarta</span>
-</div>
-<div class="bar-group">
-<span class="bar-value">95</span>
-<div class="bar-fill blue" style="height: 126px;"></div>
-<span class="bar-label">Quinta</span>
-</div>
-<div class="bar-group">
-<span class="bar-value">150</span>
-<div class="bar-fill green" style="height: 200px;"></div>
-<span class="bar-label">Sexta</span>
-</div>
-<div class="bar-group">
-<span class="bar-value">60</span>
-<div class="bar-fill pink" style="height: 80px;"></div>
-<span class="bar-label">Sábado</span>
-</div>
-<div class="bar-group">
-<span class="bar-value">25</span>
-<div class="bar-fill pink" style="height: 33px;"></div>
-<span class="bar-label">Domingo</span>
-</div>
-</div>
-</div>
-</div>
-</div>
+
+    <style>
+        /* Estilo do gráfico — a única parte que o global.css ainda não cobre.
+           Cores reaproveitadas das mesmas usadas em .stat-icon (blue/pink/green). */
+        #dashboardPanel .chart-container {
+            overflow-x: auto;
+        }
+
+        #dashboardPanel .custom-chart {
+            display: flex;
+            gap: 16px;
+            min-width: 480px;
+        }
+
+        #dashboardPanel .chart-y-axis {
+            display: flex;
+            flex-direction: column-reverse;
+            justify-content: space-between;
+            font-size: .72rem;
+            color: #9aa1b1;
+            padding-bottom: 28px;
+            flex-shrink: 0;
+        }
+
+        #dashboardPanel .chart-bars-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            gap: 18px;
+            border-left: 1px solid #eef0f4;
+            border-bottom: 1px solid #eef0f4;
+            padding: 0 8px;
+            min-height: 220px;
+        }
+
+        #dashboardPanel .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #dashboardPanel .bar-value {
+            font-size: .72rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        #dashboardPanel .bar-fill {
+            width: 60%;
+            max-width: 34px;
+            border-radius: 8px 8px 0 0;
+            transition: height .4s ease;
+        }
+
+        #dashboardPanel .bar-fill.blue { background: #3685d8; }
+        #dashboardPanel .bar-fill.pink { background: #e85d8d; }
+        #dashboardPanel .bar-fill.green { background: var(--green); }
+
+        #dashboardPanel .bar-label {
+            font-size: .72rem;
+            color: #7b8294;
+        }
+    </style>
+
+    <!-- Botão de Impressão de Relatório, novo atendimento, novo paciente -->
+    <div class="dashboard-quick-actions">
+        <div class="report-dropdown-wrapper">
+            <button class="btn-report" id="reportDropdownBtn" type="button">
+                <i class="fa-solid fa-print"></i> Impressão de Relatório <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div class="report-options-panel" id="reportOptionsPanel">
+                <a href="#"><i class="fa-solid fa-calendar-day day"></i> Relatório do Dia</a>
+                <a href="#"><i class="fa-solid fa-calendar-week week"></i> Relatório Semanal</a>
+                <a href="#"><i class="fa-solid fa-calendar-days month"></i> Relatório Mensal</a>
+            </div>
+        </div>
+
+        <button class="dashboard-quick-action" id="btnNovoAtendimento" type="button">
+            <i class="fa-solid fa-user-clock"></i>
+            Novo Atendimento
+        </button>
+
+        <button class="dashboard-quick-action" id="btnNovoPaciente" type="button">
+            <i class="fa-solid fa-user-plus"></i>
+            Novo Paciente
+        </button>
+    </div>
+
+    <!-- Cartões de estatística (dados demo — ainda não ligados ao backend) -->
+    <div class="cards-grid">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-clipboard-check"></i></div>
+            <div class="stat-info">
+                <span>Total concluídos</span>
+                <h3>150</h3>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon pink"><i class="fa-solid fa-calendar-days"></i></div>
+            <div class="stat-info">
+                <span>Agendado</span>
+                <h3>50</h3>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-spinner"></i></div>
+            <div class="stat-info">
+                <span>Decorrendo</span>
+                <h3>12</h3>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue-dark"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <div class="stat-info">
+                <span>Remarcados</span>
+                <h3>10</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Atividades (dados demo) -->
+    <div class="content-card">
+        <div class="card-header-table">
+            <h3>Tabela de atividades</h3>
+            <div class="table-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="dashboardTabelaPesquisa" placeholder="Pesquisa na tabela" type="text">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N/Atendimento</th>
+                        <th>Paciente</th>
+                        <th>Tipo</th>
+                        <th>Dr/Med/Enf</th>
+                        <th>Data/Hora</th>
+                        <th>Duração</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="dashboardTabelaAtividades">
+                    <tr class="linha-atividade" data-busca="1254 francisco fisioterapia dr. luis">
+                        <td>1254</td>
+                        <td>Francisco</td>
+                        <td>Fisioterapia</td>
+                        <td>Dr. Luis</td>
+                        <td>28 Jan, 12.30 AM</td>
+                        <td>30min 45 seg</td>
+                        <td><span class="badge green">Concluido</span></td>
+                    </tr>
+                    <tr class="linha-atividade" data-busca="6566 mizombo consulta dr. carlos">
+                        <td>6566</td>
+                        <td>Mizombo</td>
+                        <td>Consulta</td>
+                        <td>Dr. Carlos</td>
+                        <td>28 Jan, 13.00 AM</td>
+                        <td>......</td>
+                        <td><span class="badge orange">Decorrendo</span></td>
+                    </tr>
+                    <tr class="linha-atividade" data-busca="908 mauricio fisioterapia dr. luis">
+                        <td>908</td>
+                        <td>Mauricio</td>
+                        <td>Fisioterapia</td>
+                        <td>Dr. Luis</td>
+                        <td>28 Jan, 14.30 AM</td>
+                        <td>......</td>
+                        <td><span class="badge dark">Marcado</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Gráfico de Atendimentos por Dia da Semana (dados demo) -->
+    <div class="content-card chart-card-wrapper">
+        <div class="card-header-table">
+            <h3>Gráfico de Atendimentos por Dia da Semana</h3>
+        </div>
+        <div class="chart-container">
+            <div class="custom-chart">
+                <div class="chart-y-axis">
+                    <span>150</span>
+                    <span>112</span>
+                    <span>75</span>
+                    <span>37</span>
+                    <span>0</span>
+                </div>
+                <div class="chart-bars-wrapper">
+                    <div class="bar-group">
+                        <span class="bar-value">90</span>
+                        <div class="bar-fill blue" style="height: 120px;"></div>
+                        <span class="bar-label">Segunda</span>
+                    </div>
+                    <div class="bar-group">
+                        <span class="bar-value">110</span>
+                        <div class="bar-fill blue" style="height: 146px;"></div>
+                        <span class="bar-label">Terça</span>
+                    </div>
+                    <div class="bar-group">
+                        <span class="bar-value">130</span>
+                        <div class="bar-fill blue" style="height: 173px;"></div>
+                        <span class="bar-label">Quarta</span>
+                    </div>
+                    <div class="bar-group">
+                        <span class="bar-value">95</span>
+                        <div class="bar-fill blue" style="height: 126px;"></div>
+                        <span class="bar-label">Quinta</span>
+                    </div>
+                    <div class="bar-group">
+                        <span class="bar-value">150</span>
+                        <div class="bar-fill green" style="height: 200px;"></div>
+                        <span class="bar-label">Sexta</span>
+                    </div>
+                    <div class="bar-group">
+                        <span class="bar-value">60</span>
+                        <div class="bar-fill pink" style="height: 80px;"></div>
+                        <span class="bar-label">Sábado</span>
+                    </div>
+                    <div class="bar-group">
+                        <span class="bar-value">25</span>
+                        <div class="bar-fill pink" style="height: 33px;"></div>
+                        <span class="bar-label">Domingo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
