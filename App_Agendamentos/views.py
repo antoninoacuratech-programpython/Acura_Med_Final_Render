@@ -8,7 +8,6 @@ from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-
 from App_Usuarios.permissoes import requer_permissao
 from App_Usuarios.ultilizador import Utilizador
 from App_Hospital.departamento import Departamento
@@ -247,7 +246,6 @@ def atualizar_status_agendamento(request, agendamento_id):
         agendamento = Agendamento.objects.get(id=agendamento_id)
     except Agendamento.DoesNotExist:
         return JsonResponse({"ok": False, "erro": "Agendamento não encontrado."}, status=404)
-
     status = request.POST.get("status", "").strip()
     status_validos = {codigo for codigo, _ in Agendamento.Status.choices}
 
@@ -256,7 +254,6 @@ def atualizar_status_agendamento(request, agendamento_id):
 
     agendamento.status = status
     agendamento.save(update_fields=["status", "atualizado_em"])
-
     return JsonResponse({
         "ok": True,
         "status": agendamento.status,
@@ -269,14 +266,12 @@ def atualizar_status_agendamento(request, agendamento_id):
 def eliminar_agendamento(request, agendamento_id):
     if request.method != "POST":
         return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
-
     try:
         agendamento = Agendamento.objects.get(id=agendamento_id)
     except Agendamento.DoesNotExist:
         return JsonResponse({"ok": False, "erro": "Agendamento não encontrado."}, status=404)
 
     descricao = str(agendamento)
-
     try:
         agendamento.delete()
     except ProtectedError:
@@ -284,5 +279,4 @@ def eliminar_agendamento(request, agendamento_id):
             "ok": False,
             "erro": "Não é possível eliminar: este agendamento tem registos associados.",
         }, status=400)
-
     return JsonResponse({"ok": True, "mensagem": f"Agendamento '{descricao}' eliminado com sucesso."})
