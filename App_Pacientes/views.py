@@ -149,7 +149,7 @@ def cadastrar_paciente(request):
 
 
 @login_required
-@requer_permissao("paciente.cadastrar")
+@requer_permissao("paciente.gerir")
 def detalhe_paciente(request, codigo):
     """Devolve os dados de um paciente em JSON, para pré-preencher o modal em modo edição."""
 
@@ -199,7 +199,7 @@ def detalhe_paciente(request, codigo):
 
 
 @login_required
-@requer_permissao("paciente.cadastrar")
+@requer_permissao("paciente.gerir")
 def atualizar_paciente(request, codigo):
     """Atualiza um paciente existente (mesmos campos do cadastro)."""
 
@@ -320,7 +320,7 @@ def atualizar_paciente(request, codigo):
 
 
 @login_required
-@requer_permissao("paciente.cadastrar")
+@requer_permissao("paciente.gerir")
 def eliminar_paciente(request, codigo):
     """Elimina um paciente (e, por cascade, os seus documentos/endereço/contactos/responsável)."""
 
@@ -399,7 +399,7 @@ def _desenhar_rodape_acuratec(canvas_obj, doc):
 
 
 @login_required
-@requer_permissao("paciente.cadastrar")
+@requer_permissao("paciente.gerir")
 def relatorio_pacientes_pdf(request):
     """Gera um PDF com a lista de todos os pacientes do hospital do utilizador."""
 
@@ -499,7 +499,7 @@ def relatorio_pacientes_pdf(request):
 
 
 @login_required
-@requer_permissao("paciente.cadastrar")
+@requer_permissao("paciente.gerir")
 def cadastrar_paciente_pagina(request):
 
     pacientes = Paciente.objects.filter(
