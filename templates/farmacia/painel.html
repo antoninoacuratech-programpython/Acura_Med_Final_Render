@@ -1,0 +1,121 @@
+{% load static %}
+<section class="panel" id="farmaciaPanel">
+<!-- DASHBOARD BODY (Conteúdo da Farmácia) -->
+<div class="flex-1 flex flex-col h-full bg-[#C4C5E0]">
+<!-- STATS CARDS GRID -->
+<div class="grid grid-cols-4 gap-6 mb-8">
+<!-- Card 1 -->
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">Medicamentos Activos</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ medicamentos|length }}</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-solid fa-pills"></i>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">Controlados</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ total_controlados }}</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-solid fa-triangle-exclamation"></i>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">Lotes em Stock</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ total_lotes_ativos }}</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-solid fa-boxes-stacked"></i>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">A Vencer em 30 Dias</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ lotes_a_vencer }}</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-regular fa-calendar-days"></i>
+</div>
+</div>
+</div>
+<!-- MEDICAMENTOS TABLE CONTAINER -->
+<div class="bg-white rounded-3xl p-6 shadow-sm">
+<!-- Table Header / Search & Add Button -->
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold text-gray-800">Lista de Medicamentos</h3>
+<div class="flex items-center gap-4">
+<!-- Table Search Filter -->
+<div class="relative w-64">
+<span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+<i class="fa-solid fa-magnifying-glass text-xs"></i>
+</span>
+<input class="w-full h-10 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="input-search-medicamento" oninput="filterMedicamentos(this.value)" placeholder="Pesquisa" type="text"/>
+</div>
+<!-- Novo Medicamento Button -->
+<button class="flex items-center justify-center gap-2 h-10 bg-[#F36A2D] text-white hover:opacity-60 px-5 rounded-full font-medium text-sm transition shadow-sm" onclick="openMedicamentoModal()">
+<i class="fa-solid fa-circle-plus"></i>
+<span>Adicionar</span>
+</button>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                        Nome</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                        Princípio Activo</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                        Forma</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                        Estado</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">
+                                        Ação</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="medicamento-table-body">
+{% for m in medicamentos %}
+<tr class="hover:bg-gray-50/50 transition" data-id="{{ m.id }}" data-nome="{{ m.nome|lower }}" data-codigo="{{ m.codigo|lower }}" data-principio="{{ m.principio_ativo|lower }}">
+<td class="py-4 px-4 font-medium">
+                                        {{ m.nome }}{% if m.concentracao %} <span class="text-gray-400 font-normal">({{ m.concentracao }})</span>{% endif %}
+</td>
+<td class="py-4 px-4 text-gray-500">{{ m.principio_ativo }}</td>
+<td class="py-4 px-4 text-gray-500">{{ m.get_forma_farmaceutica_display }}</td>
+<td class="py-4 px-4">
+{% if m.controlado %}<span class="bg-pink-50 text-pink-600 text-xs font-medium px-3 py-1 rounded-full mr-1">Controlado</span>{% endif %}
+<span class="{% if m.ativo %}bg-teal-50 text-teal-600{% else %}bg-gray-100 text-gray-500{% endif %} text-xs font-medium px-3 py-1 rounded-full">
+                                            {% if m.ativo %}Activo{% else %}Inactivo{% endif %}
+</span>
+</td>
+<td class="py-4 px-4 text-right whitespace-nowrap">
+<button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm mr-2" onclick="openLotesModal({{ m.id }}, '{{ m.nome|escapejs }}')">Lotes</button>
+<button class="w-8 h-8 rounded-full inline-flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition" onclick="editarMedicamento({{ m.id }})" title="Editar">
+<i class="fa-solid fa-pen text-xs"></i>
+</button>
+<button class="w-8 h-8 rounded-full inline-flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-gray-100 transition" onclick="eliminarMedicamento({{ m.id }}, '{{ m.nome|escapejs }}')" title="Eliminar">
+<i class="fa-solid fa-trash-can text-xs"></i>
+</button>
+</td>
+</tr>
+{% empty %}
+<tr>
+<td class="py-6 px-4 text-center text-gray-400" colspan="5">Nenhum medicamento cadastrado.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+
+{% include 'farmacia/modais.html' %}

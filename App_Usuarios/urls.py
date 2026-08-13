@@ -8,6 +8,7 @@ from .views import (
 )
 
 from App_Agendamentos import views as agendamentos_views
+from App_Farmacia import views as farmacia_views
 
 
 urlpatterns = [
@@ -152,6 +153,70 @@ urlpatterns = [
         "modulos/agendamentos/<int:agendamento_id>/eliminar/",
         agendamentos_views.eliminar_agendamento,
         name="eliminar_agendamento"
+    ),
+
+    path(
+        "modulos/farmacia/",
+        farmacia_views.modulo_farmacia,
+        name="modulo_farmacia"
+    ),
+
+    # --- CRUD de Medicamento (farmácia) ---
+
+    path(
+        "modulos/farmacia/medicamentos/cadastrar/",
+        farmacia_views.cadastrar_medicamento,
+        name="cadastrar_medicamento"
+    ),
+
+    path(
+        "modulos/farmacia/medicamentos/<int:id>/",
+        farmacia_views.detalhe_medicamento,
+        name="detalhe_medicamento"
+    ),
+
+    path(
+        "modulos/farmacia/medicamentos/<int:id>/atualizar/",
+        farmacia_views.atualizar_medicamento,
+        name="atualizar_medicamento"
+    ),
+
+    path(
+        "modulos/farmacia/medicamentos/<int:id>/eliminar/",
+        farmacia_views.eliminar_medicamento,
+        name="eliminar_medicamento"
+    ),
+
+    path(
+        "modulos/farmacia/medicamentos/<int:medicamento_id>/lotes/",
+        farmacia_views.listar_lotes_por_medicamento,
+        name="listar_lotes_por_medicamento"
+    ),
+
+    # --- CRUD de Lote (stock da farmácia) ---
+
+    path(
+        "modulos/farmacia/lotes/cadastrar/",
+        farmacia_views.cadastrar_lote,
+        name="cadastrar_lote"
+    ),
+
+    path(
+        "modulos/farmacia/lotes/<int:id>/",
+        farmacia_views.detalhe_lote,
+        name="detalhe_lote"
+    ),
+
+    path(
+        "modulos/farmacia/lotes/<int:id>/atualizar/",
+        farmacia_views.atualizar_lote,
+        name="atualizar_lote"
+    ),
+
+    path(
+        "modulos/farmacia/lotes/<int:id>/eliminar/",
+        farmacia_views.eliminar_lote,
+        name="eliminar_lote"
     ),
 
     path(

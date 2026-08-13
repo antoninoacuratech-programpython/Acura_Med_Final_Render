@@ -1,0 +1,159 @@
+{% load static %}
+<!-- Modal: Cadastrar / Editar Medicamento -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-medicamento">
+<div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<!-- Modal Header -->
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-pills text-lg"></i>
+<h3 class="font-bold text-lg" id="titulo-modal-medicamento">Novo Medicamento</h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeMedicamentoModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<!-- Modal Form Content -->
+<form class="p-6 space-y-5 max-h-[80vh] overflow-y-auto" id="form-medicamento" onsubmit="submitMedicamento(event)">
+<input id="medicamento-id-input" name="medicamento_id" type="hidden" value=""/>
+<!-- Código + Nome -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Código</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="medicamento-codigo" name="medicamento_codigo" required="" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Nome Comercial</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="medicamento-nome" name="medicamento_nome" required="" type="text"/>
+</div>
+</div>
+<!-- Princípio Activo -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Princípio Activo</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="medicamento-principio-ativo" name="medicamento_principio_ativo" required="" type="text"/>
+</div>
+<!-- Concentração + Classe Terapêutica -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Concentração</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="medicamento-concentracao" name="medicamento_concentracao" placeholder="Ex.: 500mg" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Classe Terapêutica</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="medicamento-classe-terapeutica" name="medicamento_classe_terapeutica" type="text"/>
+</div>
+</div>
+<!-- Forma Farmacêutica + Unidade de Medida -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Forma Farmacêutica</label>
+<select class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="medicamento-forma-farmaceutica" name="medicamento_forma_farmaceutica" required="">
+<option value="">Seleccione...</option>
+{% for value, label in medicamento_formas %}
+<option value="{{ value }}">{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Unidade de Medida</label>
+<select class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="medicamento-unidade-medida" name="medicamento_unidade_medida" required="">
+<option value="">Seleccione...</option>
+{% for value, label in medicamento_unidades %}
+<option value="{{ value }}">{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+<!-- Controlado / Activo -->
+<div class="grid grid-cols-2 gap-4">
+<label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#F36A2D] transition has-[:checked]:border-[#F36A2D] has-[:checked]:bg-orange-50/50">
+<input class="text-[#F36A2D] focus:ring-[#F36A2D] rounded" id="medicamento-controlado" name="medicamento_controlado" type="checkbox"/>
+<span class="text-sm font-medium text-gray-700">Medicamento controlado</span>
+</label>
+<label class="hidden items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#F36A2D] transition has-[:checked]:border-[#F36A2D] has-[:checked]:bg-orange-50/50" id="medicamento-ativo-wrapper">
+<input checked="" class="text-[#F36A2D] focus:ring-[#F36A2D] rounded" id="medicamento-ativo" name="medicamento_ativo" type="checkbox"/>
+<span class="text-sm font-medium text-gray-700">Activo</span>
+</label>
+</div>
+<!-- Modal Actions -->
+<div class="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
+<button class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" onclick="closeMedicamentoModal()" type="button">
+                        Cancelar
+                    </button>
+<button class="px-6 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm" type="submit">
+                        Guardar
+                    </button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Modal: Lotes do Medicamento -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-lotes">
+<div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<!-- Modal Header -->
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-boxes-stacked text-lg"></i>
+<h3 class="font-bold text-lg">Lotes de <span id="lotes-medicamento-nome"></span></h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeLotesModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+<!-- Tabela de Lotes -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nº Lote</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Validade</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Quantidade</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Estado</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="lotes-table-body">
+<tr>
+<td class="py-6 px-4 text-center text-gray-400" colspan="4">A carregar...</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Nova Entrada de Stock -->
+<div class="border-t border-gray-100 pt-5">
+<h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-4">Nova Entrada de Stock</h4>
+<form class="space-y-4" id="form-lote" onsubmit="submitLote(event)">
+<input id="lote-medicamento-id" name="lote_medicamento_id" type="hidden" value=""/>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Nº do Lote</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" name="lote_numero" required="" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Validade</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" name="lote_validade" required="" type="date"/>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantidade</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" min="1" name="lote_quantidade" required="" type="number"/>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Fornecedor</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" name="lote_fornecedor" type="text"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Preço de Custo Unitário</label>
+<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" min="0" name="lote_preco_custo" step="0.01" type="number"/>
+</div>
+<div class="pt-2 flex items-center justify-end">
+<button class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm" type="submit">
+<i class="fa-solid fa-circle-plus"></i>
+                                Adicionar Lote
+                            </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
