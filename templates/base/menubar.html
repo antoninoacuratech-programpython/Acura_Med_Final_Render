@@ -28,6 +28,10 @@
         <li><a href="#" data-module="agendamentos" data-title="Agendamentos"><i class="fa-solid fa-calendar-check"></i><span>Agendamentos</span></a></li>
         {% endif %}
 
+        {% if request.user|tem_permissao:"farmacia.gerir" %}
+        <li><a href="#" data-module="farmacia" data-title="Farmácia"><i class="fa-solid fa-pills"></i><span>Farmácia</span></a></li>
+        {% endif %}
+
         {% if request.user|tem_permissao:"perfil.gerir" %}
         <li><a href="{% url 'modulo_perfis' %}" data-module="perfis" data-title="Perfis"><i class="fa-solid fa-user-shield"></i><span>Perfis</span></a></li>
         {% endif %}
