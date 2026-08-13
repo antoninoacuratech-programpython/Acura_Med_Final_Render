@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'App_Usuarios',
     'App_Agendamentos',
     'App_Laboratorio',
+    'App_Farmacia',
 ]
 
 MIDDLEWARE = [
