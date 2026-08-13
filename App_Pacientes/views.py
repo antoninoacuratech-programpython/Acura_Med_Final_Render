@@ -412,7 +412,7 @@ def relatorio_pacientes_pdf(request):
         buffer,
         pagesize=A4,
         topMargin=18 * mm,
-        bottomMargin=24 * mm,  # espaço extra para o rodapé não sobrepor a tabela
+        bottomMargin=24 * mm,  
         leftMargin=15 * mm,
         rightMargin=15 * mm,
     )
