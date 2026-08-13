@@ -1,10 +1,11 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, IntegrityError
 from django.db.models import ProtectedError, Sum
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.utils import timezone
 
 from App_Usuarios.permissoes import requer_permissao
 
@@ -186,18 +187,33 @@ def eliminar_medicamento(request, id):
     })
 
 
+def _contexto_painel_farmacia(request):
+    medicamentos = Medicamento.objects.filter(ativo=True).order_by("nome")
+    total_controlados = medicamentos.filter(controlado=True).count()
+
+    if request.user.hospital:
+        lotes_hospital = Lote.objects.filter(hospital=request.user.hospital, quantidade__gt=0)
+    else:
+        lotes_hospital = Lote.objects.none()
+
+    total_lotes_ativos = lotes_hospital.count()
+    limite_vencimento = timezone.localdate() + timedelta(days=30)
+    lotes_a_vencer = lotes_hospital.filter(validade__lte=limite_vencimento).count()
+
+    return {
+        "medicamentos": medicamentos,
+        "total_controlados": total_controlados,
+        "total_lotes_ativos": total_lotes_ativos,
+        "lotes_a_vencer": lotes_a_vencer,
+        "medicamento_formas": Medicamento.FormaFarmaceutica.choices,
+        "medicamento_unidades": Medicamento.UnidadeMedida.choices,
+    }
+
+
 @login_required
 @requer_permissao("medicamento.gerir")
 def listar_medicamentos_pagina(request):
-    medicamentos = Medicamento.objects.all().order_by("nome")
-
-    return render(
-        request,
-        "farmacia/medicamentos.html",
-        {
-            "medicamentos": medicamentos,
-        }
-    )
+    return render(request, "farmacia/painel.html", _contexto_painel_farmacia(request))
 
 
 # =========================================================================
@@ -457,13 +473,4 @@ def listar_lotes_por_medicamento(request, medicamento_id):
 @login_required
 def modulo_farmacia(request):
     """Entrada do módulo (fragmento carregado pela SPA via data-module='farmacia')."""
-
-    medicamentos = Medicamento.objects.filter(ativo=True).order_by("nome")
-
-    return render(
-        request,
-        "farmacia/painel.html",
-        {
-            "medicamentos": medicamentos,
-        }
-    )
+    return render(request, "farmacia/painel.html", _contexto_painel_farmacia(request))
