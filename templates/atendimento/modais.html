@@ -2,7 +2,7 @@
 <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-atendimento">
 <div class="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
 <!-- Modal Header -->
-<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="modal-header-acura flex items-center justify-between text-white px-4 py-3">
 <div class="flex items-center gap-3">
 <i class="fa-solid fa-user-plus text-lg"></i>
 <h3 class="font-bold text-lg">Novo Atendimento</h3>
@@ -48,18 +48,22 @@
 </div>
 <!-- 2. Escolher os Planos (Convênio vs Particular) -->
 <div class="space-y-1.5">
-<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo de
-                        Plano</label>
-<div class="grid grid-cols-2 gap-4">
-<label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#F36A2D] transition has-[:checked]:border-[#F36A2D] has-[:checked]:bg-orange-50/50">
-<input checked="" class="text-[#F36A2D] focus:ring-[#F36A2D]" name="tipo_plano" onchange="togglePlanoOptions()" type="radio" value="convenio"/>
-<span class="text-sm font-medium text-gray-700">Convênio</span>
-</label>
-<label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#F36A2D] transition has-[:checked]:border-[#F36A2D] has-[:checked]:bg-orange-50/50">
-<input class="text-[#F36A2D] focus:ring-[#F36A2D]" name="tipo_plano" onchange="togglePlanoOptions()" type="radio" value="particular"/>
-<span class="text-sm font-medium text-gray-700">Particular</span>
-</label>
-</div>
+  <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo de Plano</label>
+  <div class="grid grid-cols-2 gap-4">
+
+    <label class="flex flex-col items-center justify-center gap-2 py-4 px-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#F36A2D] transition has-[:checked]:border-[#F36A2D] has-[:checked]:bg-orange-50/50">
+      <input checked class="sr-only peer" name="tipo_plano" onchange="togglePlanoOptions()" type="radio" value="convenio">
+      <i class="fa-solid fa-hand-holding-medical text-xl text-gray-400 peer-checked:text-[#F36A2D] transition"></i>
+      <span class="text-sm font-medium text-gray-700">Convênio</span>
+    </label>
+
+    <label class="flex flex-col items-center justify-center gap-2 py-4 px-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#F36A2D] transition has-[:checked]:border-[#F36A2D] has-[:checked]:bg-orange-50/50">
+      <input class="sr-only peer" name="tipo_plano" onchange="togglePlanoOptions()" type="radio" value="particular">
+      <i class="fa-solid fa-user text-xl text-gray-400 peer-checked:text-[#F36A2D] transition"></i>
+      <span class="text-sm font-medium text-gray-700">Particular</span>
+    </label>
+
+  </div>
 </div>
 <!-- Sub-options for Convênio -->
 <div class="space-y-1.5 pl-2 border-l-2 border-[#F36A2D]" id="convenio-options">
