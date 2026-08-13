@@ -25,6 +25,20 @@ function definirValor(id, valor) {
     if (el) el.value = valor ?? "";
 }
 
+/* Activa/desactiva todos os campos dos dois formulários do modal — usado
+   para alternar entre modo edição (campos editáveis) e modo visualização
+   (campos só-leitura, sem se poder submeter por engano). */
+function definirCamposEditaveis(editavel) {
+    const seletor = "#formPaciente input, #formPaciente select, #formResponsavel input, #formResponsavel select";
+    document.querySelectorAll(seletor).forEach((campo) => {
+        if (campo.id === "paciente_codigo") return; // este é sempre readonly
+        campo.disabled = !editavel;
+    });
+
+    const btnSalvar = document.getElementById("btnSalvarPaciente");
+    if (btnSalvar) btnSalvar.classList.toggle("hidden", !editavel);
+}
+
 /* -------------------------------------------------------------------- */
 /* MODAL: abrir / fechar / trocar aba                                    */
 /* -------------------------------------------------------------------- */
@@ -37,6 +51,7 @@ function resetParaCriacao() {
     document.getElementById("paciente_codigo").value = "";
     document.getElementById("paciente_nacionalidade").value = "Angolana";
     form.action = form.dataset.urlCriar;
+    definirCamposEditaveis(true);
 
     const fotoAtual = document.getElementById("paciente_fotografia_atual");
     fotoAtual?.classList.add("hidden");
@@ -147,63 +162,72 @@ window.submitPaciente = async function (event) {
 /* EDITAR: busca os dados reais do paciente e abre o modal pré-preenchido */
 /* -------------------------------------------------------------------- */
 
+async function carregarDadosPaciente(codigo) {
+    const resposta = await fetch(`/pacientes/${encodeURIComponent(codigo)}/detalhe/`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+    });
+    const resultado = await resposta.json();
+
+    if (!resposta.ok || !resultado.ok) {
+        window.showToast?.(resultado.erro || "Não foi possível carregar o paciente.", "error");
+        return null;
+    }
+
+    const p = resultado.paciente;
+    const form = document.getElementById("formCadastroPaciente");
+    form.reset();
+    document.getElementById("paciente_codigo").value = p.codigo;
+
+    // Dados pessoais
+    definirValor("paciente_primeiro_nome", p.primeiro_nome);
+    definirValor("paciente_ultimo_nome", p.ultimo_nome);
+    definirValor("paciente_data_nascimento", p.data_nascimento);
+    definirValor("paciente_sexo", p.sexo);
+    definirValor("paciente_estado_civil", p.estado_civil);
+    definirValor("paciente_nacionalidade", p.nacionalidade || "Angolana");
+    definirValor("paciente_profissao", p.profissao);
+    definirValor("paciente_bi", p.bi);
+    definirValor("paciente_contacto", p.contacto);
+
+    // Fotografia: input file não pode ser pré-preenchido (limitação do
+    // browser) — mostra-se um aviso com a foto já guardada.
+    const fotoAtual = document.getElementById("paciente_fotografia_atual");
+    if (fotoAtual) {
+        if (p.fotografia_url) {
+            fotoAtual.innerHTML = `Foto atual: <a href="${p.fotografia_url}" target="_blank" class="text-orange-600 underline">ver</a> — escolhe um novo ficheiro para substituir.`;
+            fotoAtual.classList.remove("hidden");
+        } else {
+            fotoAtual.classList.add("hidden");
+            fotoAtual.textContent = "";
+        }
+    }
+
+    // Endereço
+    definirValor("paciente_provincia", p.provincia);
+    definirValor("paciente_municipio", p.municipio);
+    definirValor("paciente_comuna", p.comuna);
+    definirValor("paciente_bairro", p.bairro);
+    definirValor("paciente_rua", p.rua);
+    definirValor("paciente_numero_casa", p.numero_casa);
+    definirValor("paciente_referencia", p.referencia);
+
+    // Responsável
+    definirValor("responsavel_nome", p.responsavel_nome);
+    definirValor("responsavel_parentesco", p.responsavel_parentesco);
+    definirValor("responsavel_contacto", p.responsavel_contacto);
+    definirValor("responsavel_endereco", p.responsavel_endereco);
+
+    return p;
+}
+
 window.editarPaciente = async (codigo) => {
     try {
-        const resposta = await fetch(`/pacientes/${encodeURIComponent(codigo)}/detalhe/`, {
-            headers: { "X-Requested-With": "XMLHttpRequest" },
-        });
-        const resultado = await resposta.json();
+        const p = await carregarDadosPaciente(codigo);
+        if (!p) return;
 
-        if (!resposta.ok || !resultado.ok) {
-            window.showToast?.(resultado.erro || "Não foi possível carregar o paciente.", "error");
-            return;
-        }
-
-        const p = resultado.paciente;
         const form = document.getElementById("formCadastroPaciente");
-
-        form.reset();
-        document.getElementById("paciente_codigo").value = p.codigo;
         form.action = urlAtualizarPara(p.codigo);
-
-        // Dados pessoais
-        definirValor("paciente_primeiro_nome", p.primeiro_nome);
-        definirValor("paciente_ultimo_nome", p.ultimo_nome);
-        definirValor("paciente_data_nascimento", p.data_nascimento);
-        definirValor("paciente_sexo", p.sexo);
-        definirValor("paciente_estado_civil", p.estado_civil);
-        definirValor("paciente_nacionalidade", p.nacionalidade || "Angolana");
-        definirValor("paciente_profissao", p.profissao);
-        definirValor("paciente_bi", p.bi);
-        definirValor("paciente_contacto", p.contacto);
-
-        // Fotografia: input file não pode ser pré-preenchido (limitação do
-        // browser) — mostra-se um aviso com a foto já guardada.
-        const fotoAtual = document.getElementById("paciente_fotografia_atual");
-        if (fotoAtual) {
-            if (p.fotografia_url) {
-                fotoAtual.innerHTML = `Foto atual: <a href="${p.fotografia_url}" target="_blank" class="text-orange-600 underline">ver</a> — escolhe um novo ficheiro para substituir.`;
-                fotoAtual.classList.remove("hidden");
-            } else {
-                fotoAtual.classList.add("hidden");
-                fotoAtual.textContent = "";
-            }
-        }
-
-        // Endereço
-        definirValor("paciente_provincia", p.provincia);
-        definirValor("paciente_municipio", p.municipio);
-        definirValor("paciente_comuna", p.comuna);
-        definirValor("paciente_bairro", p.bairro);
-        definirValor("paciente_rua", p.rua);
-        definirValor("paciente_numero_casa", p.numero_casa);
-        definirValor("paciente_referencia", p.referencia);
-
-        // Responsável
-        definirValor("responsavel_nome", p.responsavel_nome);
-        definirValor("responsavel_parentesco", p.responsavel_parentesco);
-        definirValor("responsavel_contacto", p.responsavel_contacto);
-        definirValor("responsavel_endereco", p.responsavel_endereco);
+        definirCamposEditaveis(true);
 
         document.getElementById("modalPacienteTitulo").textContent = "Editar Paciente";
         document.getElementById("modalPacienteSubtitulo").textContent = `A editar ${p.codigo}`;
@@ -247,9 +271,27 @@ window.eliminarPaciente = async (btn, codigo) => {
     }
 };
 
-window.visualizarPaciente = (codigo) => {
-    // TODO: ligar a uma view real de detalhe/leitura do paciente (modal ou página própria).
-    console.log("Visualizar paciente", codigo);
+/* -------------------------------------------------------------------- */
+/* VISUALIZAR: mesmo modal, mesmos dados, mas em modo só-leitura         */
+/* -------------------------------------------------------------------- */
+
+window.visualizarPaciente = async (codigo) => {
+    try {
+        const p = await carregarDadosPaciente(codigo);
+        if (!p) return;
+
+        const form = document.getElementById("formCadastroPaciente");
+        form.action = "#"; // não deve submeter nada em modo leitura
+        definirCamposEditaveis(false);
+
+        document.getElementById("modalPacienteTitulo").textContent = "Ver Paciente";
+        document.getElementById("modalPacienteSubtitulo").textContent = `${p.codigo} — modo de visualização`;
+
+        document.getElementById("modalPaciente")?.classList.remove("hidden");
+        mudarAba("paciente");
+    } catch (e) {
+        window.showToast?.("Falha de conexão ao carregar paciente.", "error");
+    }
 };
 
 /* -------------------------------------------------------------------- */
