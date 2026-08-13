@@ -50,7 +50,8 @@ def login_view(request):
                 login(request, utilizador)
 
                 if utilizador.is_superuser:
-                    return redirect("admin:index")
+                    #return redirect("admin:index")
+                    return redirect("dashboard")
 
                 return redirect("dashboard")
 
