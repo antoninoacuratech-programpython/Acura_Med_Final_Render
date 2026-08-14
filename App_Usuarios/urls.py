@@ -10,6 +10,7 @@ from .views import (
 from App_Agendamentos import views as agendamentos_views
 from App_Farmacia import views as farmacia_views
 from App_Atendimentos import views as atendimento_views
+from App_Prescricoes import views as prescricoes_views
 
 
 urlpatterns = [
@@ -276,6 +277,26 @@ urlpatterns = [
         "modulos/atendimento/<int:id>/concluir/",
         atendimento_views.concluir_atendimento,
         name="concluir_atendimento"
+    ),
+
+    # --- Prescrição digital ---
+
+    path(
+        "modulos/prescricoes/cadastrar/",
+        prescricoes_views.cadastrar_prescricao,
+        name="cadastrar_prescricao"
+    ),
+
+    path(
+        "modulos/prescricoes/<int:id>/",
+        prescricoes_views.detalhe_prescricao,
+        name="detalhe_prescricao"
+    ),
+
+    path(
+        "modulos/prescricoes/paciente/<str:paciente_codigo>/",
+        prescricoes_views.listar_prescricoes_paciente,
+        name="listar_prescricoes_paciente"
     ),
 
 ]
