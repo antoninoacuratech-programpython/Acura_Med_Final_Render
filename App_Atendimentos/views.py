@@ -385,10 +385,6 @@ def listar_meus_atendimentos(request):
 @login_required
 @requer_permissao("atendimento.atender")
 def ficha_atendimento(request, id):
-    """
-    Página completa da consulta (não é modal) — carregada no workspace
-    da SPA quando o médico clica "Atender".
-    """
     try:
         atendimento = Atendimento.objects.select_related("paciente").get(
             id=id, hospital=request.user.hospital, profissional=request.user
@@ -405,7 +401,7 @@ def ficha_atendimento(request, id):
 
     return render(
         request,
-        "atendimento/ficha.html",
+        "meus_atendimentos/ficha.html",
         {
             "atendimento": atendimento,
             "consulta": consulta,
@@ -440,7 +436,7 @@ def listar_fila_triagem(request):
 
     atendimentos = Atendimento.objects.filter(
         hospital=request.user.hospital,
-        status=Atendimento.Status.AGUARDANDO,
+        status__in=[Atendimento.Status.AGUARDANDO, Atendimento.Status.EM_ATENDIMENTO],
         criado_em__date=hoje,
     ).select_related("paciente", "consulta").order_by("criado_em")
 
@@ -479,8 +475,17 @@ def salvar_sinais_vitais(request, atendimento_id):
     consulta, _ = Consulta.objects.get_or_create(atendimento=atendimento)
 
     if request.method == "GET":
+        documento_bi = atendimento.paciente.documentos.filter(
+            tipo=DocumentoPaciente.TipoDocumento.BI
+        ).first()
+
         return JsonResponse({
             "ok": True,
+            "paciente": {
+                "nome": atendimento.paciente.nome_completo,
+                "bi": documento_bi.numero if documento_bi else "",
+                "idade": atendimento.paciente.idade,
+            },
             "sinais_vitais": {
                 "pressao_arterial": consulta.pressao_arterial,
                 "frequencia_cardiaca": consulta.frequencia_cardiaca,

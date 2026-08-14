@@ -12,6 +12,22 @@
 </div>
 <form class="p-6 space-y-4" id="form-sinais-vitais" onsubmit="submitSinaisVitais(event)">
 <input id="sv-atendimento-id" name="atendimento_id" type="hidden" value=""/>
+
+<div class="grid grid-cols-3 gap-4 bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+<div>
+<p class="text-xs text-gray-400">Nome</p>
+<p class="font-semibold text-gray-800" id="sv-info-nome">—</p>
+</div>
+<div>
+<p class="text-xs text-gray-400">Nº do BI</p>
+<p class="font-semibold text-gray-800" id="sv-info-bi">—</p>
+</div>
+<div>
+<p class="text-xs text-gray-400">Idade</p>
+<p class="font-semibold text-gray-800" id="sv-info-idade">—</p>
+</div>
+</div>
+
 <div class="grid grid-cols-2 gap-4">
 <div class="space-y-1">
 <label class="block text-xs font-semibold text-gray-600 uppercase">Pressão Arterial (mmHg)</label>
