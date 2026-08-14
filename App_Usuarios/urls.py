@@ -9,6 +9,7 @@ from .views import (
 
 from App_Agendamentos import views as agendamentos_views
 from App_Farmacia import views as farmacia_views
+from App_Atendimentos import views as atendimento_views
 
 
 urlpatterns = [
@@ -48,6 +49,17 @@ urlpatterns = [
         views.modulo_pacientes,
         name="modulo_pacientes"
     ),
+    path(
+    "modulos/pacientes/",
+    views.modulo_pacientes,
+    name="modulo_pacientes"
+),
+
+    path(
+    "modulos/pacientes/buscar/",
+    views.buscar_pacientes,
+    name="buscar_pacientes"
+),
 
     path(
         "modulos/atendimento/",
@@ -224,5 +236,25 @@ urlpatterns = [
         views.modulo_configuracoes,
         name="modulo_configuracoes"
     ),
+     path(
+            "modulos/atendimento/cadastrar/",
+            atendimento_views.cadastrar_atendimento,
+            name="cadastrar_atendimento"
+        ),
+    
+        path(
+            "modulos/atendimento/checkin/<int:agendamento_id>/",
+            atendimento_views.iniciar_atendimento_de_agendamento,
+            name="iniciar_atendimento_de_agendamento"
+        ),
+    
+        path(
+            "modulos/atendimento/fila/",
+            atendimento_views.listar_fila_atendimento,
+            name="listar_fila_atendimento"
+        ),
 
 ]
+
+
+   

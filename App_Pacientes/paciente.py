@@ -2,6 +2,7 @@ from uuid import uuid4
 from django.db import models
 from django.utils import timezone
 from App_Hospital.hospital import Hospital
+from App_Usuarios.entidade_vinculada import EntidadeVinculada
 
 class Paciente(models.Model):
 
@@ -110,6 +111,15 @@ class Paciente(models.Model):
         max_length=20,
         choices=EstadoPaciente.choices,
         default=EstadoPaciente.ATIVO
+    )
+
+    entidade_vinculada = models.ForeignKey(
+        EntidadeVinculada,
+        on_delete=models.SET_NULL,
+        related_name="pacientes",
+        verbose_name="Entidade Vinculada",
+        blank=True,
+        null=True,
     )
 
     criado_em = models.DateTimeField(

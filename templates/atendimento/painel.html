@@ -1,105 +1,75 @@
 {% load static %}
 <section class="panel" id="atendimentosPanel">
-<!-- DASHBOARD BODY (Conteúdo do Atendimento) -->
 <div class="flex-1 flex flex-col h-full bg-[#C4C5E0]">
 <!-- STATS CARDS GRID -->
 <div class="grid grid-cols-4 gap-6 mb-8">
-<!-- Card 1 -->
 <div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
 <div>
-<p class="text-xs text-gray-500 font-medium mb-1">Pacientes Atendidos</p>
-<h3 class="text-2xl font-bold text-gray-800">50</h3>
+<p class="text-xs text-gray-500 font-medium mb-1">Aguardando</p>
+<h3 class="text-2xl font-bold text-gray-800" id="stat-aguardando">—</h3>
 </div>
 <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-lg shadow-inner">
-<i class="fa-solid fa-user"></i>
+<i class="fa-solid fa-user-clock"></i>
 </div>
 </div>
-<!-- Card 2 -->
 <div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
 <div>
-<p class="text-xs text-gray-500 font-medium mb-1">Engavetados</p>
-<h3 class="text-2xl font-bold text-gray-800">10</h3>
+<p class="text-xs text-gray-500 font-medium mb-1">Em Atendimento</p>
+<h3 class="text-2xl font-bold text-gray-800" id="stat-em-atendimento">—</h3>
 </div>
 <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg shadow-inner">
-<i class="fa-solid fa-briefcase"></i>
+<i class="fa-solid fa-stethoscope"></i>
 </div>
 </div>
-<!-- Card 3 -->
 <div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
 <div>
-<p class="text-xs text-gray-500 font-medium mb-1">Estatistica Diaria</p>
-<h3 class="text-2xl font-bold text-gray-800">50%</h3>
-</div>
-<div class="w-12 h-12 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center text-lg shadow-inner">
-<i class="fa-solid fa-chart-line"></i>
-</div>
-</div>
-<!-- Card 4 -->
-<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
-<div>
-<p class="text-xs text-gray-500 font-medium mb-1">Marcados/Dia</p>
-<h3 class="text-2xl font-bold text-gray-800">100</h3>
+<p class="text-xs text-gray-500 font-medium mb-1">Concluídos Hoje</p>
+<h3 class="text-2xl font-bold text-gray-800" id="stat-concluidos">—</h3>
 </div>
 <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-solid fa-check"></i>
+</div>
+</div>
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">Aguardando Chegada</p>
+<h3 class="text-2xl font-bold text-gray-800" id="stat-aguardando-chegada">—</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center text-lg shadow-inner">
 <i class="fa-regular fa-calendar-days"></i>
 </div>
 </div>
 </div>
-<!-- PATIENTS TABLE CONTAINER -->
+<!-- FILA -->
 <div class="bg-white rounded-3xl p-6 shadow-sm">
-<!-- Table Header / Search & Add Button -->
 <div class="flex items-center justify-between mb-6">
-<h3 class="text-lg font-bold text-gray-800">Lista de Pacientes</h3>
+<h3 class="text-lg font-bold text-gray-800">Fila de Atendimento</h3>
 <div class="flex items-center gap-4">
-<!-- Table Search Filter -->
 <div class="relative w-64">
 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
 <i class="fa-solid fa-magnifying-glass text-xs"></i>
 </span>
-<input class="w-full h-10 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" placeholder="Pesquisa" type="text"/>
+<input class="w-full h-10 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="input-search-fila" oninput="filterFilaAtendimento(this.value)" placeholder="Pesquisa" type="text"/>
 </div>
-<!-- Adicionar Atendimento Button -->
 <button class="flex items-center justify-center gap-2 h-10 bg-[#F36A2D] text-white hover:opacity-60 px-5 rounded-full font-medium text-sm transition shadow-sm" onclick="openAtendimentoModal()">
 <i class="fa-solid fa-circle-plus"></i>
 <span>Adicionar</span>
 </button>
 </div>
 </div>
-<!-- Table -->
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="border-b border-gray-100">
-<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                        Nome do Paciente</th>
-<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                        Responsavel</th>
-<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">
-                                        Ação</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Paciente</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Profissional</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Prioridade</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Estado</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ação</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="patient-table-body">
-<tr class="hover:bg-gray-50/50 transition">
-<td class="py-4 px-4 font-medium">Francisco Antonio</td>
-<td class="py-4 px-4 text-gray-500">Jonathan Antonio</td>
-<td class="py-4 px-4 text-right">
-<button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm">Atender</button>
-</td>
-</tr>
-<tr class="hover:bg-gray-50/50 transition">
-<td class="py-4 px-4 font-medium">George Campos Maria Dante</td>
-<td class="py-4 px-4 text-gray-500">Lourdes Maria</td>
-<td class="py-4 px-4 text-right">
-<button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm">Atender</button>
-</td>
-</tr>
-<tr class="hover:bg-gray-50/50 transition">
-<td class="py-4 px-4 font-medium">Bernardo Carlos Macedo</td>
-<td class="py-4 px-4 text-gray-500">Francisco Carlos Macedo</td>
-<td class="py-4 px-4 text-right">
-<button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm">Atender</button>
-</td>
-</tr>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="fila-atendimento-body">
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="5">A carregar...</td></tr>
 </tbody>
 </table>
 </div>

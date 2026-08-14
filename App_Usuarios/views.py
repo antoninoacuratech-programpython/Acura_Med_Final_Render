@@ -6,7 +6,7 @@ from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction, IntegrityError
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse
 
@@ -179,11 +179,50 @@ def modulo_pacientes(request):
 
 
 @login_required
+def buscar_pacientes(request):
+    """Autocomplete de pacientes — usado no modal de Atendimento."""
+    if request.method != "GET":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    termo = request.GET.get("q", "").strip()
+    if not termo:
+        return JsonResponse({"ok": True, "pacientes": []})
+
+    pacientes = Paciente.objects.filter(
+        hospital=request.user.hospital
+    ).filter(
+        Q(primeiro_nome__icontains=termo) |
+        Q(ultimo_nome__icontains=termo) |
+        Q(codigo__icontains=termo)
+    ).order_by("primeiro_nome")[:10]
+
+    return JsonResponse({
+        "ok": True,
+        "pacientes": [
+            {
+                "codigo": p.codigo,
+                "nome": p.nome_completo,
+                "responsavel": (p.responsaveis.first().nome if p.responsaveis.exists() else ""),
+            }
+            for p in pacientes
+        ]
+    })
+
+
+@login_required
 def modulo_atendimento(request):
+
+    profissionais = Utilizador.objects.filter(
+        hospital=request.user.hospital,
+        is_active=True,
+    ).order_by("primeiro_nome")
 
     return render(
         request,
-        "atendimento/painel.html"
+        "atendimento/painel.html",
+        {
+            "profissionais": profissionais,
+        }
     )
 
 
