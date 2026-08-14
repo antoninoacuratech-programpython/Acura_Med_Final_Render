@@ -3,13 +3,22 @@
 const MEUS_ATENDIMENTOS_URLS = {
     fila: "/modulos/meus_atendimentos/fila/",
     iniciar: (id) => `/modulos/atendimento/${id}/iniciar/`,
-    concluir: (id) => `/modulos/atendimento/${id}/concluir/`,
+    ficha: (id) => `/modulos/meus_atendimentos/ficha/${id}/`,
+    cadastrarConsulta: (atendimentoId) => `/modulos/atendimento/${atendimentoId}/consulta/`,
     cadastrarPrescricao: "/modulos/prescricoes/cadastrar/",
 };
 
+// O mesmo script serve tanto a fila (lista) como a ficha (formulário) —
+// initModule chama sempre este initializer, por isso ele decide o que
+// inicializar consoante o que encontra no DOM.
 window.moduleInitializers = window.moduleInitializers || {};
 window.moduleInitializers.meus_atendimentos = function () {
-    carregarMeusAtendimentos();
+    if (document.getElementById("meus-atendimentos-body")) {
+        carregarMeusAtendimentos();
+    }
+    if (document.getElementById("form-ficha-atendimento")) {
+        initFichaAtendimento();
+    }
 };
 
 function meusAtendimentosCsrfToken() {
@@ -21,6 +30,10 @@ function meusAtendimentosCsrfToken() {
     }
     return "";
 }
+
+// -------------------------------------------------------------------------
+// FILA
+// -------------------------------------------------------------------------
 
 const MEUS_ATENDIMENTOS_BADGES = {
     aguardando: "bg-blue-50 text-blue-600",
@@ -44,7 +57,7 @@ async function carregarMeusAtendimentos() {
                 const badge = MEUS_ATENDIMENTOS_BADGES[a.status] || "bg-gray-100 text-gray-500";
                 const acao = a.status === "concluido"
                     ? `<span class="text-xs text-gray-400">Concluído</span>`
-                    : `<button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="atenderPaciente(${a.id}, '${a.paciente.replace(/'/g, "\\'")}')">Atender</button>`;
+                    : `<button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="atenderPaciente(${a.id})">Atender</button>`;
 
                 return `
                     <tr class="hover:bg-gray-50/50 transition" data-search="${a.paciente.toLowerCase()} ${a.paciente_codigo.toLowerCase()}">
@@ -68,11 +81,8 @@ function filterMeusAtendimentos(termo) {
     });
 }
 
-// -------------------------------------------------------------------------
-// Atender: marca em_atendimento e abre o modal de prescrição
-// -------------------------------------------------------------------------
-
-async function atenderPaciente(atendimentoId, nomePaciente) {
+// Atender: marca em_atendimento e navega para a Ficha completa (não é modal).
+async function atenderPaciente(atendimentoId) {
     try {
         const resposta = await fetch(MEUS_ATENDIMENTOS_URLS.iniciar(atendimentoId), {
             method: "POST",
@@ -85,87 +95,126 @@ async function atenderPaciente(atendimentoId, nomePaciente) {
             return;
         }
 
-        carregarMeusAtendimentos();
-        openPrescricaoModal(atendimentoId, nomePaciente);
+        window.loadModule("meus_atendimentos", "Ficha de Atendimento", {
+            url: MEUS_ATENDIMENTOS_URLS.ficha(atendimentoId),
+        });
     } catch (e) {
         window.showToast?.("Falha de conexão ao iniciar atendimento.", "error");
     }
 }
 
 // -------------------------------------------------------------------------
-// Modal de prescrição
+// FICHA DE ATENDIMENTO
 // -------------------------------------------------------------------------
 
-function openPrescricaoModal(atendimentoId, nomePaciente) {
-    document.getElementById("prescricao-paciente-nome").textContent = nomePaciente;
-    document.getElementById("prescricao-atendimento-id").value = atendimentoId;
-    document.getElementById("itens-prescricao").innerHTML = "";
-    document.getElementById("modalErroPrescricao").classList.add("hidden");
-    document.getElementById("form-prescricao").reset();
-    document.getElementById("prescricao-atendimento-id").value = atendimentoId; // reset() limpa o hidden também
-
-    adicionarLinhaPrescricao(); // começa sempre com uma linha pronta
-
-    document.getElementById("modal-prescricao").classList.remove("hidden");
+function initFichaAtendimento() {
+    // Mostra o painel da conduta já seleccionada (caso seja um rascunho
+    // reaberto) e garante pelo menos uma linha de medicamento se a
+    // conduta já for Prescrição.
+    const marcado = document.querySelector('input[name="conduta"]:checked');
+    if (marcado) {
+        mudarConduta(marcado.value);
+        if (marcado.value === "PRESCRICAO" && !document.getElementById("itens-prescricao-ficha").children.length) {
+            adicionarLinhaPrescricaoFicha();
+        }
+    }
 }
 
-function closePrescricaoModal() {
-    document.getElementById("modal-prescricao").classList.add("hidden");
+function mudarConduta(valor) {
+    ["SOLICITAR_EXAME", "INTERNAR", "ALTA", "PRESCRICAO"].forEach((c) => {
+        document.getElementById(`painel-conduta-${c}`)?.classList.toggle("hidden", c !== valor);
+    });
+
+    if (valor === "PRESCRICAO" && !document.getElementById("itens-prescricao-ficha").children.length) {
+        adicionarLinhaPrescricaoFicha();
+    }
 }
 
-function adicionarLinhaPrescricao() {
-    const template = document.getElementById("template-linha-prescricao");
+function adicionarLinhaPrescricaoFicha() {
+    const template = document.getElementById("template-linha-prescricao-ficha");
     const clone = template.content.cloneNode(true);
-    document.getElementById("itens-prescricao").appendChild(clone);
+    document.getElementById("itens-prescricao-ficha").appendChild(clone);
 }
 
-async function submitPrescricao(event) {
-    event.preventDefault();
-
-    const form = document.getElementById("form-prescricao");
-    const erroEl = document.getElementById("modalErroPrescricao");
-    const btn = document.getElementById("btnEnviarPrescricao");
+async function guardarFicha(finalizar) {
+    const form = document.getElementById("form-ficha-atendimento");
+    const erroEl = document.getElementById("modalErroFicha");
+    const atendimentoId = form.dataset.atendimentoId;
     erroEl.classList.add("hidden");
 
-    if (!document.getElementById("itens-prescricao").children.length) {
-        erroEl.textContent = "Adicione pelo menos um medicamento.";
+    const condutaSelecionada = document.querySelector('input[name="conduta"]:checked')?.value || "";
+
+    if (finalizar && !condutaSelecionada) {
+        erroEl.textContent = "Selecione uma conduta antes de finalizar o atendimento.";
         erroEl.classList.remove("hidden");
         return;
     }
 
-    btn.disabled = true;
-    btn.classList.add("opacity-60", "cursor-not-allowed");
-
-    try {
-        const resposta = await fetch(MEUS_ATENDIMENTOS_URLS.cadastrarPrescricao, {
-            method: "POST",
-            headers: { "X-CSRFToken": meusAtendimentosCsrfToken() },
-            body: new FormData(form),
-        });
-        const resultado = await resposta.json();
-
-        if (!resposta.ok || !resultado.ok) {
-            erroEl.textContent = resultado.erro || "Erro ao enviar prescrição.";
+    // Se a conduta for Prescrição e for finalizar, a receita tem de ir
+    // primeiro — só finalizamos a consulta depois de a farmácia já ter
+    // a receita, para nunca fechar um atendimento sem a receita enviada.
+    if (finalizar && condutaSelecionada === "PRESCRICAO") {
+        if (!document.getElementById("itens-prescricao-ficha").children.length) {
+            erroEl.textContent = "Adicione pelo menos um medicamento antes de finalizar.";
             erroEl.classList.remove("hidden");
             return;
         }
 
-        window.showToast?.(resultado.mensagem || "Prescrição enviada à farmácia.");
+        const dadosPrescricao = new FormData();
+        dadosPrescricao.append("prescricao_atendimento_id", atendimentoId);
+        dadosPrescricao.append("prescricao_observacoes", form.observacoes_condutas.value);
 
-        // Consulta terminada: fecha o modal e marca o atendimento como concluído.
-        const atendimentoId = document.getElementById("prescricao-atendimento-id").value;
-        await fetch(MEUS_ATENDIMENTOS_URLS.concluir(atendimentoId), {
+        document.querySelectorAll("#itens-prescricao-ficha select[name='item_medicamento_id[]']").forEach((el) => dadosPrescricao.append("item_medicamento_id[]", el.value));
+        document.querySelectorAll("#itens-prescricao-ficha input[name='item_dosagem[]']").forEach((el) => dadosPrescricao.append("item_dosagem[]", el.value));
+        document.querySelectorAll("#itens-prescricao-ficha select[name='item_via[]']").forEach((el) => dadosPrescricao.append("item_via[]", el.value));
+        document.querySelectorAll("#itens-prescricao-ficha input[name='item_frequencia[]']").forEach((el) => dadosPrescricao.append("item_frequencia[]", el.value));
+        document.querySelectorAll("#itens-prescricao-ficha input[name='item_duracao_dias[]']").forEach((el) => dadosPrescricao.append("item_duracao_dias[]", el.value));
+        document.querySelectorAll("#itens-prescricao-ficha input[name='item_quantidade[]']").forEach((el) => dadosPrescricao.append("item_quantidade[]", el.value));
+
+        try {
+            const respostaPrescricao = await fetch(MEUS_ATENDIMENTOS_URLS.cadastrarPrescricao, {
+                method: "POST",
+                headers: { "X-CSRFToken": meusAtendimentosCsrfToken() },
+                body: dadosPrescricao,
+            });
+            const resultadoPrescricao = await respostaPrescricao.json();
+
+            if (!respostaPrescricao.ok || !resultadoPrescricao.ok) {
+                erroEl.textContent = resultadoPrescricao.erro || "Erro ao enviar a receita à farmácia.";
+                erroEl.classList.remove("hidden");
+                return; // não finaliza a consulta se a receita falhar
+            }
+        } catch (e) {
+            erroEl.textContent = "Falha de conexão ao enviar a receita.";
+            erroEl.classList.remove("hidden");
+            return;
+        }
+    }
+
+    const dadosConsulta = new FormData(form);
+    dadosConsulta.set("finalizar", finalizar ? "1" : "0");
+
+    try {
+        const resposta = await fetch(MEUS_ATENDIMENTOS_URLS.cadastrarConsulta(atendimentoId), {
             method: "POST",
             headers: { "X-CSRFToken": meusAtendimentosCsrfToken() },
+            body: dadosConsulta,
         });
+        const resultado = await resposta.json();
 
-        closePrescricaoModal();
-        carregarMeusAtendimentos();
+        if (!resposta.ok || !resultado.ok) {
+            erroEl.textContent = resultado.erro || "Erro ao guardar a ficha.";
+            erroEl.classList.remove("hidden");
+            return;
+        }
+
+        window.showToast?.(resultado.mensagem);
+
+        if (finalizar) {
+            window.loadModule("meus_atendimentos", "Meus Atendimentos");
+        }
     } catch (e) {
         erroEl.textContent = "Falha de conexão. Tente novamente.";
         erroEl.classList.remove("hidden");
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove("opacity-60", "cursor-not-allowed");
     }
 }

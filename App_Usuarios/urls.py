@@ -253,7 +253,25 @@ urlpatterns = [
         name="listar_fila_atendimento"
     ),
 
-    # --- Meus Atendimentos (fila do médico) ---
+    path(
+        "modulos/atendimento/<int:id>/iniciar/",
+        atendimento_views.iniciar_atendimento,
+        name="iniciar_atendimento"
+    ),
+
+    path(
+        "modulos/atendimento/<int:id>/concluir/",
+        atendimento_views.concluir_atendimento,
+        name="concluir_atendimento"
+    ),
+
+    path(
+        "modulos/atendimento/<int:atendimento_id>/consulta/",
+        atendimento_views.cadastrar_consulta,
+        name="cadastrar_consulta"
+    ),
+
+    # --- Meus Atendimentos (fila do médico + ficha completa) ---
 
     path(
         "modulos/meus_atendimentos/",
@@ -268,15 +286,9 @@ urlpatterns = [
     ),
 
     path(
-        "modulos/atendimento/<int:id>/iniciar/",
-        atendimento_views.iniciar_atendimento,
-        name="iniciar_atendimento"
-    ),
-
-    path(
-        "modulos/atendimento/<int:id>/concluir/",
-        atendimento_views.concluir_atendimento,
-        name="concluir_atendimento"
+        "modulos/meus_atendimentos/ficha/<int:id>/",
+        atendimento_views.ficha_atendimento,
+        name="ficha_atendimento"
     ),
 
     # --- Prescrição digital ---

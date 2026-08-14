@@ -305,3 +305,122 @@ def concluir_atendimento(request, id):
     atendimento.save(update_fields=["status"])
 
     return JsonResponse({"ok": True, "mensagem": "Atendimento concluído."})
+
+# Acrescentar a App_Atendimentos/views.py. Precisa de:
+#   from django.http import HttpResponseNotFound
+#   from .consulta import Consulta
+# no topo do ficheiro (junto aos outros imports).
+
+from django.http import HttpResponseNotFound
+from App_Pacientes.documento import DocumentoPaciente
+from .consulta import Consulta
+
+
+def _parse_int(valor):
+    valor = (valor or "").strip()
+    if not valor:
+        return None
+    try:
+        return int(valor)
+    except ValueError:
+        return None
+
+
+def _parse_decimal(valor):
+    from decimal import Decimal, InvalidOperation
+    valor = (valor or "").strip()
+    if not valor:
+        return None
+    try:
+        return Decimal(valor)
+    except InvalidOperation:
+        return None
+
+
+@login_required
+@requer_permissao("atendimento.atender")
+def ficha_atendimento(request, id):
+    """
+    Página completa da consulta (não é modal) — carregada no workspace da
+    SPA quando o médico clica "Atender". Cria a Consulta na primeira vez
+    que é aberta (get_or_create), para já existir algo a preencher.
+    """
+    try:
+        atendimento = Atendimento.objects.select_related("paciente").get(
+            id=id, hospital=request.user.hospital, profissional=request.user
+        )
+    except Atendimento.DoesNotExist:
+        return HttpResponseNotFound("Atendimento não encontrado ou não atribuído a si.")
+
+    consulta, _ = Consulta.objects.get_or_create(atendimento=atendimento)
+    medicamentos = Medicamento.objects.filter(ativo=True).order_by("nome")
+
+    documento_bi = atendimento.paciente.documentos.filter(
+        tipo=DocumentoPaciente.TipoDocumento.BI
+    ).first()
+
+    return render(
+        request,
+        "atendimento/ficha.html",
+        {
+            "atendimento": atendimento,
+            "consulta": consulta,
+            "medicamentos": medicamentos,
+            "documento_bi": documento_bi,
+        },
+    )
+
+
+@login_required
+@requer_permissao("atendimento.atender")
+def cadastrar_consulta(request, atendimento_id):
+    """
+    Guarda a ficha clínica. finalizar=1 marca o atendimento como
+    Concluído; qualquer outro valor guarda como rascunho e mantém o
+    atendimento em_atendimento.
+    """
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    try:
+        atendimento = Atendimento.objects.get(
+            id=atendimento_id, hospital=request.user.hospital, profissional=request.user
+        )
+    except Atendimento.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Atendimento não encontrado."}, status=404)
+
+    consulta, _ = Consulta.objects.get_or_create(atendimento=atendimento)
+
+    conduta = request.POST.get("conduta", "").strip().upper()
+    if conduta and conduta not in Consulta.Conduta.values:
+        return JsonResponse({"ok": False, "erro": "Conduta inválida."}, status=400)
+
+    finalizar = request.POST.get("finalizar") == "1"
+
+    if finalizar and not conduta:
+        return JsonResponse({"ok": False, "erro": "Selecione uma conduta antes de finalizar."}, status=400)
+
+    consulta.pressao_arterial = request.POST.get("pressao_arterial", "").strip()
+    consulta.frequencia_cardiaca = _parse_int(request.POST.get("frequencia_cardiaca"))
+    consulta.frequencia_respiratoria = _parse_int(request.POST.get("frequencia_respiratoria"))
+    consulta.temperatura = _parse_decimal(request.POST.get("temperatura"))
+    consulta.saturacao_o2 = _parse_int(request.POST.get("saturacao_o2"))
+    consulta.glicemia_capilar = _parse_int(request.POST.get("glicemia_capilar"))
+    consulta.queixa_historia_atual = request.POST.get("queixa_historia_atual", "").strip()
+    consulta.exame_fisico = request.POST.get("exame_fisico", "").strip()
+    consulta.diagnostico_clinico = request.POST.get("diagnostico_clinico", "").strip()
+    consulta.conduta = conduta
+    consulta.observacoes_condutas = request.POST.get("observacoes_condutas", "").strip()
+    consulta.rascunho = not finalizar
+    consulta.save()
+
+    if finalizar:
+        atendimento.status = Atendimento.Status.CONCLUIDO
+        atendimento.save(update_fields=["status"])
+
+    return JsonResponse({
+        "ok": True,
+        "mensagem": "Atendimento finalizado." if finalizar else "Rascunho guardado.",
+        "conduta": consulta.conduta,
+        "finalizado": finalizar,
+    })
