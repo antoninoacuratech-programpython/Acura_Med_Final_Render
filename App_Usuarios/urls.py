@@ -49,17 +49,12 @@ urlpatterns = [
         views.modulo_pacientes,
         name="modulo_pacientes"
     ),
-    path(
-    "modulos/pacientes/",
-    views.modulo_pacientes,
-    name="modulo_pacientes"
-),
 
     path(
-    "modulos/pacientes/buscar/",
-    views.buscar_pacientes,
-    name="buscar_pacientes"
-),
+        "modulos/pacientes/buscar/",
+        views.buscar_pacientes,
+        name="buscar_pacientes"
+    ),
 
     path(
         "modulos/atendimento/",
@@ -236,31 +231,37 @@ urlpatterns = [
         views.modulo_configuracoes,
         name="modulo_configuracoes"
     ),
-     path(
-            "modulos/atendimento/cadastrar/",
-            atendimento_views.cadastrar_atendimento,
-            name="cadastrar_atendimento"
-        ),
-    
-        path(
-            "modulos/atendimento/checkin/<int:agendamento_id>/",
-            atendimento_views.iniciar_atendimento_de_agendamento,
-            name="iniciar_atendimento_de_agendamento"
-        ),
-    
-        path(
-            "modulos/atendimento/fila/",
-            atendimento_views.listar_fila_atendimento,
-            name="listar_fila_atendimento"
-        ),
-        path(
-        "modulos/meus-atendimentos/",
+
+    # --- Atendimento (fila da recepção) ---
+
+    path(
+        "modulos/atendimento/cadastrar/",
+        atendimento_views.cadastrar_atendimento,
+        name="cadastrar_atendimento"
+    ),
+
+    path(
+        "modulos/atendimento/checkin/<int:agendamento_id>/",
+        atendimento_views.iniciar_atendimento_de_agendamento,
+        name="iniciar_atendimento_de_agendamento"
+    ),
+
+    path(
+        "modulos/atendimento/fila/",
+        atendimento_views.listar_fila_atendimento,
+        name="listar_fila_atendimento"
+    ),
+
+    # --- Meus Atendimentos (fila do médico) ---
+
+    path(
+        "modulos/meus_atendimentos/",
         atendimento_views.modulo_meus_atendimentos,
         name="modulo_meus_atendimentos"
     ),
 
     path(
-        "modulos/meus-atendimentos/fila/",
+        "modulos/meus_atendimentos/fila/",
         atendimento_views.listar_meus_atendimentos,
         name="listar_meus_atendimentos"
     ),
@@ -278,6 +279,3 @@ urlpatterns = [
     ),
 
 ]
-
-
-   

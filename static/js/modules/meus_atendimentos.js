@@ -1,7 +1,7 @@
 // static/js/modules/meus_atendimentos.js
 
 const MEUS_ATENDIMENTOS_URLS = {
-    fila: "/modulos/meus-atendimentos/fila/",
+    fila: "/modulos/meus_atendimentos/fila/",
     iniciar: (id) => `/modulos/atendimento/${id}/iniciar/`,
     concluir: (id) => `/modulos/atendimento/${id}/concluir/`,
     cadastrarPrescricao: "/modulos/prescricoes/cadastrar/",
