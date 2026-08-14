@@ -39,6 +39,9 @@
         {% if request.user|tem_permissao:"permissao.gerir" %}
         <li><a href="{% url 'modulo_permissoes' %}" data-module="permissoes" data-title="Permissões"><i class="fa-solid fa-key"></i><span>Permissões</span></a></li>
         {% endif %}
+         {% if request.user|tem_permissao:"atendimento.atender" %}
+        <li><a href="#" data-module="meus_atendimentos" data-title="Meus Atendimentos"><i class="fa-solid fa-stethoscope"></i><span>Meus Atendimentos</span></a></li>
+        {% endif %}
     </ul>
 
     <ul class="sidebar-menu sidebar-menu-bottom">

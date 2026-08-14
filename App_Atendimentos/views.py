@@ -7,7 +7,7 @@ from App_Usuarios.permissoes import requer_permissao
 from App_Pacientes.paciente import Paciente
 from App_Usuarios.entidade_vinculada import EntidadeVinculada
 from App_Agendamentos.agendamento import Agendamento
-
+from App_Farmacia.medicamento import Medicamento
 from .atendimento import Atendimento
 from App_Usuarios.ultilizador import Utilizador
 @login_required
@@ -211,3 +211,97 @@ def listar_fila_atendimento(request):
     ]
 
     return JsonResponse({"ok": True, "fila": fila})
+
+
+
+
+
+@login_required
+@requer_permissao("atendimento.atender")
+def modulo_meus_atendimentos(request):
+    """Fragmento SPA — painel do médico com a fila só dele + modal de receitar."""
+    medicamentos = Medicamento.objects.filter(ativo=True).order_by("nome")
+    return render(
+        request,
+        "meus_atendimentos/painel.html",
+        {"medicamentos": medicamentos},
+    )
+
+
+@login_required
+@requer_permissao("atendimento.atender")
+def listar_meus_atendimentos(request):
+    """
+    Fila de hoje, filtrada só pelos atendimentos atribuídos a este
+    profissional — cada médico vê apenas o que está em seu nome.
+    """
+    if request.method != "GET":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    hoje = timezone.localdate()
+
+    atendimentos = Atendimento.objects.filter(
+        hospital=request.user.hospital,
+        profissional=request.user,
+        criado_em__date=hoje,
+    ).exclude(status=Atendimento.Status.CANCELADO).select_related("paciente").order_by("criado_em")
+
+    return JsonResponse({
+        "ok": True,
+        "atendimentos": [
+            {
+                "id": a.id,
+                "paciente": a.paciente.nome_completo,
+                "paciente_codigo": a.paciente.codigo,
+                "tipo_atendimento": a.tipo_atendimento,
+                "prioridade": a.prioridade,
+                "status": a.status,
+                "status_display": a.get_status_display(),
+                "criado_em": a.criado_em.isoformat(),
+            }
+            for a in atendimentos
+        ]
+    })
+
+
+@login_required
+@requer_permissao("atendimento.atender")
+def iniciar_atendimento(request, id):
+    """Marca o atendimento como Em Atendimento — só o profissional atribuído pode iniciar."""
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    try:
+        atendimento = Atendimento.objects.get(id=id, hospital=request.user.hospital)
+    except Atendimento.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Atendimento não encontrado."}, status=404)
+
+    if atendimento.profissional_id != request.user.id:
+        return JsonResponse({"ok": False, "erro": "Este atendimento não está atribuído a si."}, status=403)
+
+    atendimento.status = Atendimento.Status.EM_ATENDIMENTO
+    atendimento.save(update_fields=["status"])
+
+    return JsonResponse({
+        "ok": True,
+        "mensagem": f"Atendimento de {atendimento.paciente.nome_completo} iniciado.",
+        "atendimento_id": atendimento.id,
+    })
+
+
+@login_required
+@requer_permissao("atendimento.atender")
+def concluir_atendimento(request, id):
+    """Marca o atendimento como Concluído — chamado depois de a receita ser enviada."""
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    try:
+        atendimento = Atendimento.objects.get(id=id, hospital=request.user.hospital, profissional=request.user)
+    except Atendimento.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Atendimento não encontrado."}, status=404)
+
+    atendimento.status = Atendimento.Status.CONCLUIDO
+    atendimento.save(update_fields=["status"])
+
+    return JsonResponse({"ok": True, "mensagem": "Atendimento concluído."})

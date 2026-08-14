@@ -253,6 +253,29 @@ urlpatterns = [
             atendimento_views.listar_fila_atendimento,
             name="listar_fila_atendimento"
         ),
+        path(
+        "modulos/meus-atendimentos/",
+        atendimento_views.modulo_meus_atendimentos,
+        name="modulo_meus_atendimentos"
+    ),
+
+    path(
+        "modulos/meus-atendimentos/fila/",
+        atendimento_views.listar_meus_atendimentos,
+        name="listar_meus_atendimentos"
+    ),
+
+    path(
+        "modulos/atendimento/<int:id>/iniciar/",
+        atendimento_views.iniciar_atendimento,
+        name="iniciar_atendimento"
+    ),
+
+    path(
+        "modulos/atendimento/<int:id>/concluir/",
+        atendimento_views.concluir_atendimento,
+        name="concluir_atendimento"
+    ),
 
 ]
 

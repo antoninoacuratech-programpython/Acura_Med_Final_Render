@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const workspace = document.getElementById("workspace");
     const pageTitle = document.getElementById("pageTitle");
     const menuLinks = document.querySelectorAll(".sidebar-menu a[data-module]");
-    const moduleMap = { dashboard: "Visão Geral", atendimento: "Atendimentos", encaminhamento: "Encaminhamentos", convenios: "Convênios & Guias", colaboradores: "Colaboradores", pacientes: "Pacientes", agendamentos: "Agendamentos", laboratorio: "Laboratório", farmacia: "Farmácia", configuracoes: "Configurações", perfis: "Perfis", permissoes: "Permissões" };
+    const moduleMap = { dashboard: "Visão Geral", atendimento: "Atendimentos", encaminhamento: "Encaminhamentos", convenios: "Convênios & Guias", colaboradores: "Colaboradores", pacientes: "Pacientes", agendamentos: "Agendamentos", laboratorio: "Laboratório", farmacia: "Farmácia", meus_atendimentos: "Meus Atendimentos", configuracoes: "Configurações", perfis: "Perfis", permissoes: "Permissões" };
 
     function setActive(module, submodule) {
         menuLinks.forEach(link => {
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const moduleScripts = { dashboard: "/static/js/modules/dashboard.js", pacientes: "/static/js/modules/pacientes.js", atendimento: "/static/js/modules/atendimento.js", encaminhamento: "/static/js/modules/encaminhamento.js", convenios: "/static/js/modules/convenios.js", colaboradores: "/static/js/modules/colaboradores.js", agendamentos: "/static/js/modules/agendamentos.js", laboratorio: "/static/js/modules/laboratorio.js", farmacia: "/static/js/modules/farmacia.js", configuracoes: "/static/js/modules/configuracoes.js", perfis: "/static/js/modules/perfis.js", permissoes: "/static/js/modules/permissoes.js" };
+    const moduleScripts = { dashboard: "/static/js/modules/dashboard.js", pacientes: "/static/js/modules/pacientes.js", atendimento: "/static/js/modules/atendimento.js", encaminhamento: "/static/js/modules/encaminhamento.js", convenios: "/static/js/modules/convenios.js", colaboradores: "/static/js/modules/colaboradores.js", agendamentos: "/static/js/modules/agendamentos.js", laboratorio: "/static/js/modules/laboratorio.js", farmacia: "/static/js/modules/farmacia.js", meus_atendimentos: "/static/js/modules/meus_atendimentos.js", configuracoes: "/static/js/modules/configuracoes.js", perfis: "/static/js/modules/perfis.js", permissoes: "/static/js/modules/permissoes.js" };
     async function initModule(module, submodule) {
         const src = moduleScripts[module];
         if (src && !document.querySelector(`script[data-module-script="${module}"]`)) {
