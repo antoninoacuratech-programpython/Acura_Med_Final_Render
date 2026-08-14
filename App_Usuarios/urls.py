@@ -271,6 +271,12 @@ urlpatterns = [
         name="cadastrar_consulta"
     ),
 
+    path(
+        "modulos/atendimento/<int:atendimento_id>/sinais-vitais/",
+        atendimento_views.salvar_sinais_vitais,
+        name="salvar_sinais_vitais"
+    ),
+
     # --- Meus Atendimentos (fila do médico + ficha completa) ---
 
     path(
@@ -289,6 +295,20 @@ urlpatterns = [
         "modulos/meus_atendimentos/ficha/<int:id>/",
         atendimento_views.ficha_atendimento,
         name="ficha_atendimento"
+    ),
+
+    # --- Triagem (fila do enfermeiro — sinais vitais) ---
+
+    path(
+        "modulos/triagem/",
+        atendimento_views.modulo_triagem,
+        name="modulo_triagem"
+    ),
+
+    path(
+        "modulos/triagem/fila/",
+        atendimento_views.listar_fila_triagem,
+        name="listar_fila_triagem"
     ),
 
     # --- Prescrição digital ---

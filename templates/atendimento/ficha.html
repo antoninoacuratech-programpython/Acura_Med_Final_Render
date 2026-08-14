@@ -43,31 +43,32 @@
 <div class="flex items-center gap-2 mb-4">
 <span class="w-6 h-6 rounded-full bg-[#2D3250] text-white text-xs font-bold flex items-center justify-center">2</span>
 <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Sinais Vitais</h3>
+<span class="text-xs text-gray-400 flex items-center gap-1"><i class="fa-solid fa-lock"></i> Registados pela triagem — só leitura</span>
 </div>
 <div class="grid grid-cols-6 gap-4">
 <div class="space-y-1">
 <label class="block text-xs text-gray-500">Pressão Arterial (mmHg)</label>
-<input class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="pressao_arterial" placeholder="120/80" type="text" value="{{ consulta.pressao_arterial }}"/>
+<input class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed" name="pressao_arterial" placeholder="120/80" readonly type="text" value="{{ consulta.pressao_arterial }}"/>
 </div>
 <div class="space-y-1">
 <label class="block text-xs text-gray-500">Freq. Cardíaca (bpm)</label>
-<input class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="frequencia_cardiaca" type="number" value="{{ consulta.frequencia_cardiaca|default:'' }}"/>
+<input class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed" name="frequencia_cardiaca" readonly type="number" value="{{ consulta.frequencia_cardiaca|default:'' }}"/>
 </div>
 <div class="space-y-1">
 <label class="block text-xs text-gray-500">Freq. Respiratória (irpm)</label>
-<input class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="frequencia_respiratoria" type="number" value="{{ consulta.frequencia_respiratoria|default:'' }}"/>
+<input class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed" name="frequencia_respiratoria" readonly type="number" value="{{ consulta.frequencia_respiratoria|default:'' }}"/>
 </div>
 <div class="space-y-1">
 <label class="block text-xs text-gray-500">Temperatura (°C)</label>
-<input class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="temperatura" step="0.1" type="number" value="{{ consulta.temperatura|default:'' }}"/>
+<input class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed" name="temperatura" readonly step="0.1" type="number" value="{{ consulta.temperatura|default:'' }}"/>
 </div>
 <div class="space-y-1">
 <label class="block text-xs text-gray-500">Saturação O2 (%)</label>
-<input class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="saturacao_o2" type="number" value="{{ consulta.saturacao_o2|default:'' }}"/>
+<input class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed" name="saturacao_o2" readonly type="number" value="{{ consulta.saturacao_o2|default:'' }}"/>
 </div>
 <div class="space-y-1">
 <label class="block text-xs text-gray-500">Glicemia Capilar (mg/dL)</label>
-<input class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="glicemia_capilar" type="number" value="{{ consulta.glicemia_capilar|default:'' }}"/>
+<input class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed" name="glicemia_capilar" readonly type="number" value="{{ consulta.glicemia_capilar|default:'' }}"/>
 </div>
 </div>
 </div>

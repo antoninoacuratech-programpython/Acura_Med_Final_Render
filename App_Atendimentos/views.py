@@ -1,15 +1,47 @@
+from decimal import Decimal, InvalidOperation
+
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import JsonResponse
-from django.utils import timezone
+from django.http import JsonResponse, HttpResponseNotFound
 from django.shortcuts import render
+from django.utils import timezone
+
 from App_Usuarios.permissoes import requer_permissao
-from App_Pacientes.paciente import Paciente
+from App_Usuarios.ultilizador import Utilizador
 from App_Usuarios.entidade_vinculada import EntidadeVinculada
+from App_Pacientes.paciente import Paciente
+from App_Pacientes.documento import DocumentoPaciente
 from App_Agendamentos.agendamento import Agendamento
 from App_Farmacia.medicamento import Medicamento
+
 from .atendimento import Atendimento
-from App_Usuarios.ultilizador import Utilizador
+from .consulta import Consulta
+
+
+def _parse_int(valor):
+    valor = (valor or "").strip()
+    if not valor:
+        return None
+    try:
+        return int(valor)
+    except ValueError:
+        return None
+
+
+def _parse_decimal(valor):
+    valor = (valor or "").strip()
+    if not valor:
+        return None
+    try:
+        return Decimal(valor)
+    except InvalidOperation:
+        return None
+
+
+# =========================================================================
+# ATENDIMENTO (fila da recepção)
+# =========================================================================
+
 @login_required
 def modulo_atendimento(request):
 
@@ -25,6 +57,7 @@ def modulo_atendimento(request):
             "profissionais": profissionais,
         }
     )
+
 
 @login_required
 @requer_permissao("atendimento.cadastrar")
@@ -63,7 +96,6 @@ def cadastrar_atendimento(request):
 
     profissional = None
     if profissional_id:
-        from App_Usuarios.ultilizador import Utilizador
         try:
             profissional = Utilizador.objects.get(id=profissional_id, hospital=request.user.hospital)
         except Utilizador.DoesNotExist:
@@ -117,8 +149,6 @@ def iniciar_atendimento_de_agendamento(request, agendamento_id):
     """
     Check-in: o paciente marcou (Agendamento existe) e chegou fisicamente.
     Cria o Atendimento copiando os dados do agendamento e liga os dois.
-    Chamado quando a recepção confirma a chegada (ex.: botão "Check-in"
-    na lista de agendamentos do dia).
     """
     if request.method != "POST":
         return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
@@ -136,7 +166,7 @@ def iniciar_atendimento_de_agendamento(request, agendamento_id):
         paciente=agendamento.paciente,
         agendamento=agendamento,
         profissional=agendamento.profissional,
-        tipo_plano=Atendimento.TipoPlano.PARTICULAR,  # ajustável depois na recepção se for convénio
+        tipo_plano=Atendimento.TipoPlano.PARTICULAR,
         prioridade=Atendimento.Prioridade.NORMAL,
         tipo_atendimento=Atendimento.TipoAtendimento.CONSULTA_GERAL,
         status=Atendimento.Status.AGUARDANDO,
@@ -158,9 +188,7 @@ def iniciar_atendimento_de_agendamento(request, agendamento_id):
 def listar_fila_atendimento(request):
     """
     Fila do dia: atendimentos já criados (walk-in ou check-in feito) +
-    agendamentos de hoje que ainda não fizeram check-in (aparecem com um
-    estado sintético "aguardando_chegada", só para a recepção saber que
-    ainda faltam chegar).
+    agendamentos de hoje que ainda não fizeram check-in.
     """
     if request.method != "GET":
         return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
@@ -213,57 +241,6 @@ def listar_fila_atendimento(request):
     return JsonResponse({"ok": True, "fila": fila})
 
 
-
-
-
-@login_required
-@requer_permissao("atendimento.atender")
-def modulo_meus_atendimentos(request):
-    """Fragmento SPA — painel do médico com a fila só dele + modal de receitar."""
-    medicamentos = Medicamento.objects.filter(ativo=True).order_by("nome")
-    return render(
-        request,
-        "meus_atendimentos/painel.html",
-        {"medicamentos": medicamentos},
-    )
-
-
-@login_required
-@requer_permissao("atendimento.atender")
-def listar_meus_atendimentos(request):
-    """
-    Fila de hoje, filtrada só pelos atendimentos atribuídos a este
-    profissional — cada médico vê apenas o que está em seu nome.
-    """
-    if request.method != "GET":
-        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
-
-    hoje = timezone.localdate()
-
-    atendimentos = Atendimento.objects.filter(
-        hospital=request.user.hospital,
-        profissional=request.user,
-        criado_em__date=hoje,
-    ).exclude(status=Atendimento.Status.CANCELADO).select_related("paciente").order_by("criado_em")
-
-    return JsonResponse({
-        "ok": True,
-        "atendimentos": [
-            {
-                "id": a.id,
-                "paciente": a.paciente.nome_completo,
-                "paciente_codigo": a.paciente.codigo,
-                "tipo_atendimento": a.tipo_atendimento,
-                "prioridade": a.prioridade,
-                "status": a.status,
-                "status_display": a.get_status_display(),
-                "criado_em": a.criado_em.isoformat(),
-            }
-            for a in atendimentos
-        ]
-    })
-
-
 @login_required
 @requer_permissao("atendimento.atender")
 def iniciar_atendimento(request, id):
@@ -306,44 +283,111 @@ def concluir_atendimento(request, id):
 
     return JsonResponse({"ok": True, "mensagem": "Atendimento concluído."})
 
-# Acrescentar a App_Atendimentos/views.py. Precisa de:
-#   from django.http import HttpResponseNotFound
-#   from .consulta import Consulta
-# no topo do ficheiro (junto aos outros imports).
 
-from django.http import HttpResponseNotFound
-from App_Pacientes.documento import DocumentoPaciente
-from .consulta import Consulta
+@login_required
+@requer_permissao("atendimento.atender")
+def cadastrar_consulta(request, atendimento_id):
+    """
+    Guarda a ficha clínica. finalizar=1 marca o atendimento como
+    Concluído; qualquer outro valor guarda como rascunho.
+    Sinais vitais NÃO são tocados aqui — são exclusivamente da Triagem.
+    """
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
 
-
-def _parse_int(valor):
-    valor = (valor or "").strip()
-    if not valor:
-        return None
     try:
-        return int(valor)
-    except ValueError:
-        return None
+        atendimento = Atendimento.objects.get(
+            id=atendimento_id, hospital=request.user.hospital, profissional=request.user
+        )
+    except Atendimento.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Atendimento não encontrado."}, status=404)
+
+    consulta, _ = Consulta.objects.get_or_create(atendimento=atendimento)
+
+    conduta = request.POST.get("conduta", "").strip().upper()
+    if conduta and conduta not in Consulta.Conduta.values:
+        return JsonResponse({"ok": False, "erro": "Conduta inválida."}, status=400)
+
+    finalizar = request.POST.get("finalizar") == "1"
+
+    if finalizar and not conduta:
+        return JsonResponse({"ok": False, "erro": "Selecione uma conduta antes de finalizar."}, status=400)
+
+    consulta.queixa_historia_atual = request.POST.get("queixa_historia_atual", "").strip()
+    consulta.exame_fisico = request.POST.get("exame_fisico", "").strip()
+    consulta.diagnostico_clinico = request.POST.get("diagnostico_clinico", "").strip()
+    consulta.conduta = conduta
+    consulta.observacoes_condutas = request.POST.get("observacoes_condutas", "").strip()
+    consulta.rascunho = not finalizar
+    consulta.save()
+
+    if finalizar:
+        atendimento.status = Atendimento.Status.CONCLUIDO
+        atendimento.save(update_fields=["status"])
+
+    return JsonResponse({
+        "ok": True,
+        "mensagem": "Atendimento finalizado." if finalizar else "Rascunho guardado.",
+        "conduta": consulta.conduta,
+        "finalizado": finalizar,
+    })
 
 
-def _parse_decimal(valor):
-    from decimal import Decimal, InvalidOperation
-    valor = (valor or "").strip()
-    if not valor:
-        return None
-    try:
-        return Decimal(valor)
-    except InvalidOperation:
-        return None
+# =========================================================================
+# MEUS ATENDIMENTOS (fila do médico + ficha completa)
+# =========================================================================
+
+@login_required
+@requer_permissao("atendimento.atender")
+def modulo_meus_atendimentos(request):
+    """Fragmento SPA — painel do médico com a fila só dele."""
+    medicamentos = Medicamento.objects.filter(ativo=True).order_by("nome")
+    return render(
+        request,
+        "meus_atendimentos/painel.html",
+        {"medicamentos": medicamentos},
+    )
+
+
+@login_required
+@requer_permissao("atendimento.atender")
+def listar_meus_atendimentos(request):
+    """Fila de hoje, filtrada só pelos atendimentos atribuídos a este profissional."""
+    if request.method != "GET":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    hoje = timezone.localdate()
+
+    atendimentos = Atendimento.objects.filter(
+        hospital=request.user.hospital,
+        profissional=request.user,
+        criado_em__date=hoje,
+    ).exclude(status=Atendimento.Status.CANCELADO).select_related("paciente").order_by("criado_em")
+
+    return JsonResponse({
+        "ok": True,
+        "atendimentos": [
+            {
+                "id": a.id,
+                "paciente": a.paciente.nome_completo,
+                "paciente_codigo": a.paciente.codigo,
+                "tipo_atendimento": a.tipo_atendimento,
+                "prioridade": a.prioridade,
+                "status": a.status,
+                "status_display": a.get_status_display(),
+                "criado_em": a.criado_em.isoformat(),
+            }
+            for a in atendimentos
+        ]
+    })
 
 
 @login_required
 @requer_permissao("atendimento.atender")
 def ficha_atendimento(request, id):
     """
-    Página completa da consulta (não é modal) — carregada no workspace da
-    SPA quando o médico clica "Atender". Cria a Consulta na primeira vez
-    que é aberta (get_or_create), para já existir algo a preencher.
+    Página completa da consulta (não é modal) — carregada no workspace
+    da SPA quando o médico clica "Atender".
     """
     try:
         atendimento = Atendimento.objects.select_related("paciente").get(
@@ -371,34 +415,84 @@ def ficha_atendimento(request, id):
     )
 
 
+# =========================================================================
+# TRIAGEM (fila do enfermeiro — sinais vitais)
+# =========================================================================
+
 @login_required
-@requer_permissao("atendimento.atender")
-def cadastrar_consulta(request, atendimento_id):
+@requer_permissao("atendimento.triagem")
+def modulo_triagem(request):
+    """Fragmento SPA — fila de triagem (enfermeiro)."""
+    return render(request, "triagem/painel.html", {})
+
+
+@login_required
+@requer_permissao("atendimento.triagem")
+def listar_fila_triagem(request):
     """
-    Guarda a ficha clínica. finalizar=1 marca o atendimento como
-    Concluído; qualquer outro valor guarda como rascunho e mantém o
-    atendimento em_atendimento.
+    Todos os atendimentos de hoje ainda em Aguardando — não filtrado por
+    profissional, porque o enfermeiro atende toda a fila.
     """
-    if request.method != "POST":
+    if request.method != "GET":
         return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
 
+    hoje = timezone.localdate()
+
+    atendimentos = Atendimento.objects.filter(
+        hospital=request.user.hospital,
+        status=Atendimento.Status.AGUARDANDO,
+        criado_em__date=hoje,
+    ).select_related("paciente", "consulta").order_by("criado_em")
+
+    return JsonResponse({
+        "ok": True,
+        "atendimentos": [
+            {
+                "id": a.id,
+                "paciente": a.paciente.nome_completo,
+                "paciente_codigo": a.paciente.codigo,
+                "prioridade": a.prioridade,
+                "sinais_preenchidos": hasattr(a, "consulta") and bool(a.consulta.pressao_arterial),
+                "criado_em": a.criado_em.isoformat(),
+            }
+            for a in atendimentos
+        ]
+    })
+
+
+@login_required
+@requer_permissao("atendimento.triagem")
+def salvar_sinais_vitais(request, atendimento_id):
+    """
+    GET: devolve os sinais vitais já registados (para pré-preencher o
+    modal em modo edição). POST: grava os 6 campos.
+
+    Só toca nos 6 campos de sinais vitais — nunca em queixa, exame
+    físico, diagnóstico ou conduta, que pertencem exclusivamente ao
+    médico.
+    """
     try:
-        atendimento = Atendimento.objects.get(
-            id=atendimento_id, hospital=request.user.hospital, profissional=request.user
-        )
+        atendimento = Atendimento.objects.get(id=atendimento_id, hospital=request.user.hospital)
     except Atendimento.DoesNotExist:
         return JsonResponse({"ok": False, "erro": "Atendimento não encontrado."}, status=404)
 
     consulta, _ = Consulta.objects.get_or_create(atendimento=atendimento)
 
-    conduta = request.POST.get("conduta", "").strip().upper()
-    if conduta and conduta not in Consulta.Conduta.values:
-        return JsonResponse({"ok": False, "erro": "Conduta inválida."}, status=400)
+    if request.method == "GET":
+        return JsonResponse({
+            "ok": True,
+            "sinais_vitais": {
+                "pressao_arterial": consulta.pressao_arterial,
+                "frequencia_cardiaca": consulta.frequencia_cardiaca,
+                "frequencia_respiratoria": consulta.frequencia_respiratoria,
+                "temperatura": str(consulta.temperatura) if consulta.temperatura is not None else "",
+                "saturacao_o2": consulta.saturacao_o2,
+                "glicemia_capilar": consulta.glicemia_capilar,
+            }
+        })
 
-    finalizar = request.POST.get("finalizar") == "1"
-
-    if finalizar and not conduta:
-        return JsonResponse({"ok": False, "erro": "Selecione uma conduta antes de finalizar."}, status=400)
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
 
     consulta.pressao_arterial = request.POST.get("pressao_arterial", "").strip()
     consulta.frequencia_cardiaca = _parse_int(request.POST.get("frequencia_cardiaca"))
@@ -406,21 +500,9 @@ def cadastrar_consulta(request, atendimento_id):
     consulta.temperatura = _parse_decimal(request.POST.get("temperatura"))
     consulta.saturacao_o2 = _parse_int(request.POST.get("saturacao_o2"))
     consulta.glicemia_capilar = _parse_int(request.POST.get("glicemia_capilar"))
-    consulta.queixa_historia_atual = request.POST.get("queixa_historia_atual", "").strip()
-    consulta.exame_fisico = request.POST.get("exame_fisico", "").strip()
-    consulta.diagnostico_clinico = request.POST.get("diagnostico_clinico", "").strip()
-    consulta.conduta = conduta
-    consulta.observacoes_condutas = request.POST.get("observacoes_condutas", "").strip()
-    consulta.rascunho = not finalizar
     consulta.save()
-
-    if finalizar:
-        atendimento.status = Atendimento.Status.CONCLUIDO
-        atendimento.save(update_fields=["status"])
 
     return JsonResponse({
         "ok": True,
-        "mensagem": "Atendimento finalizado." if finalizar else "Rascunho guardado.",
-        "conduta": consulta.conduta,
-        "finalizado": finalizar,
+        "mensagem": f"Sinais vitais de {atendimento.paciente.nome_completo} registados.",
     })

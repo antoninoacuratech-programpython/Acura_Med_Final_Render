@@ -1,0 +1,33 @@
+{% load static %}
+<section class="panel" id="triagemPanel">
+<div class="flex-1 flex flex-col h-full bg-[#C4C5E0]">
+<div class="bg-white rounded-3xl p-6 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold text-gray-800">Triagem — Sinais Vitais</h3>
+<div class="relative w-64">
+<span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+<i class="fa-solid fa-magnifying-glass text-xs"></i>
+</span>
+<input class="w-full h-10 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="input-search-triagem" oninput="filterTriagem(this.value)" placeholder="Pesquisa" type="text"/>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Paciente</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Prioridade</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Sinais Vitais</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ação</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="triagem-body">
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="4">A carregar...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+
+{% include 'triagem/modais.html' %}

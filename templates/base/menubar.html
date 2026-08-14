@@ -42,6 +42,9 @@
          {% if request.user|tem_permissao:"atendimento.atender" %}
         <li><a href="#" data-module="meus_atendimentos" data-title="Meus Atendimentos"><i class="fa-solid fa-stethoscope"></i><span>Meus Atendimentos</span></a></li>
         {% endif %}
+        {% if request.user|tem_permissao:"atendimento.triagem" %}
+<li><a href="#" data-module="triagem" data-title="Triagem"><i class="fa-solid fa-heart-pulse"></i><span>Triagem</span></a></li>
+{% endif %}
     </ul>
 
     <ul class="sidebar-menu sidebar-menu-bottom">
