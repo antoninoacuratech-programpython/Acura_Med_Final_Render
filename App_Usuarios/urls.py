@@ -11,6 +11,7 @@ from App_Agendamentos import views as agendamentos_views
 from App_Farmacia import views as farmacia_views
 from App_Atendimentos import views as atendimento_views
 from App_Prescricoes import views as prescricoes_views
+from App_Laboratorio import views as laboratorio_views
 
 
 urlpatterns = [
@@ -360,5 +361,38 @@ urlpatterns = [
         prescricoes_views.listar_prescricoes_paciente,
         name="listar_prescricoes_paciente"
     ),
+
+    path(
+        "modulos/laboratorio/",
+        laboratorio_views.modulo_laboratorio,
+        name="modulo_laboratorio"
+    ),
+
+    path(
+        "modulos/laboratorio/exames/cadastrar/",
+        laboratorio_views.cadastrar_tipo_exame,
+        name="cadastrar_tipo_exame"
+    ),
+
+    path(
+        "modulos/laboratorio/exames/<int:id>/",
+        laboratorio_views.detalhe_tipo_exame,
+        name="detalhe_tipo_exame"
+    ),
+
+    path(
+        "modulos/laboratorio/exames/<int:id>/atualizar/",
+        laboratorio_views.atualizar_tipo_exame,
+        name="atualizar_tipo_exame"
+    ),
+
+    path(
+        "modulos/laboratorio/exames/<int:id>/eliminar/",
+        laboratorio_views.eliminar_tipo_exame,
+        name="eliminar_tipo_exame"
+    ),
+
+
+
 
 ]

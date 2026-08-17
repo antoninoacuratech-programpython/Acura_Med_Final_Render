@@ -45,6 +45,13 @@
         {% if request.user|tem_permissao:"atendimento.triagem" %}
 <li><a href="#" data-module="triagem" data-title="Triagem"><i class="fa-solid fa-heart-pulse"></i><span>Triagem</span></a></li>
 {% endif %}
+
+{% if request.user|tem_permissao:"tipoexame.gerir" %}
+ <li><a href="#" data-module="laboratorio" data-title="Laboratório"><i class="fa-solid fa-flask-vial"></i><span>Laboratório</span></a></li>
+ {% endif %}
+
+
+
     </ul>
 
     <ul class="sidebar-menu sidebar-menu-bottom">
