@@ -9,17 +9,14 @@ from django.db import transaction, IntegrityError
 from django.db.models import Prefetch, Q
 from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse
-
 from .ultilizador import Utilizador
 from .perfil import Perfil
 from .permissao import Permissao
 from .perfil_permissao import PerfilPermissao
 from .permissoes import requer_permissao
-
 from App_Hospital.hospital import Hospital
 from App_Hospital.departamento import Departamento
 from App_Hospital.especialidade import Especialidade
-
 from App_Pacientes.paciente import Paciente
 from App_Pacientes.documento import DocumentoPaciente
 
@@ -31,30 +28,21 @@ def login_view(request):
         return redirect("dashboard")
 
     if request.method == "POST":
-
         email = request.POST.get("email")
         password = request.POST.get("password")
-
         try:
             utilizador = Utilizador.objects.get(email=email)
-
             if check_password(password, utilizador.password):
-
                 if not utilizador.is_active:
                     messages.error(
                         request,
                         "Este utilizador está desativado."
                     )
                     return redirect("login")
-
                 login(request, utilizador)
-
                 if utilizador.is_superuser:
-                    #return redirect("admin:index")
                     return redirect("dashboard")
-
                 return redirect("dashboard")
-
             else:
                 messages.error(
                     request,
@@ -66,7 +54,6 @@ def login_view(request):
                 request,
                 "Email ou senha inválidos."
             )
-
     return render(
         request,
         "index.html"
@@ -76,32 +63,24 @@ def login_view(request):
 # LOGOUT
 @login_required
 def logout_view(request):
-
     logout(request)
-
     messages.success(
         request,
         "Sessão encerrada com sucesso."
     )
-
     return redirect("login")
 
 def registro_view(request):
-
     if request.method == "POST":
-
         nome = request.POST.get("nome")
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
-
         if password != confirm_password:
-
             messages.error(
                 request,
                 "As senhas não coincidem."
             )
-
             return redirect("login")
 
 

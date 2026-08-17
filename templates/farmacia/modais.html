@@ -142,10 +142,6 @@
 <input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" name="lote_fornecedor" type="text"/>
 </div>
 </div>
-<div class="space-y-1.5">
-<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Preço de Custo Unitário</label>
-<input class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" min="0" name="lote_preco_custo" step="0.01" type="number"/>
-</div>
 <div class="pt-2 flex items-center justify-end">
 <button class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm" type="submit">
 <i class="fa-solid fa-circle-plus"></i>
@@ -153,6 +149,159 @@
                             </button>
 </div>
 </form>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Modal: Histórico de Movimentos -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-historico">
+<div class="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-clock-rotate-left text-lg"></i>
+<h3 class="font-bold text-lg">Histórico de Movimentos</h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeHistoricoModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+<!-- Filtros -->
+<div class="grid grid-cols-4 gap-3">
+<select class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="historico-filtro-medicamento" onchange="carregarHistorico()">
+<option value="">Todos os medicamentos</option>
+{% for m in medicamentos %}
+<option value="{{ m.id }}">{{ m.nome }}</option>
+{% endfor %}
+</select>
+<select class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="historico-filtro-tipo" onchange="carregarHistorico()">
+<option value="">Todos os tipos</option>
+<option value="ENTRADA">Entrada</option>
+<option value="SAIDA">Saída</option>
+<option value="AJUSTE">Ajuste</option>
+</select>
+<input class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="historico-filtro-data-inicio" onchange="carregarHistorico()" type="date"/>
+<input class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="historico-filtro-data-fim" onchange="carregarHistorico()" type="date"/>
+</div>
+<!-- Tabela -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Data</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Medicamento</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Lote</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tipo</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Quantidade</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Utilizador</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Referência</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="historico-body">
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="7">A carregar...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Modal: Fila de Receitas -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-receitas">
+<div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-file-prescription text-lg"></i>
+<h3 class="font-bold text-lg">Receitas por Processar</h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeReceitasModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<div class="p-6 max-h-[80vh] overflow-y-auto">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Paciente</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Médico</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Itens</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Recebida em</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ação</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="receitas-body">
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="5">A carregar...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Modal: Detalhe da Receita (verificação de stock + dispensar) -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-detalhe-receita">
+<div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-file-prescription text-lg"></i>
+<h3 class="font-bold text-lg">Receita de <span id="receita-paciente-nome"></span></h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeDetalheReceitaModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+<div class="grid grid-cols-3 gap-4 bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+<div>
+<p class="text-xs text-gray-400">Paciente</p>
+<p class="font-semibold text-gray-800" id="receita-info-paciente">—</p>
+</div>
+<div>
+<p class="text-xs text-gray-400">Médico</p>
+<p class="font-semibold text-gray-800" id="receita-info-medico">—</p>
+</div>
+<div>
+<p class="text-xs text-gray-400">Estado</p>
+<p class="font-semibold text-gray-800" id="receita-info-estado">—</p>
+</div>
+</div>
+
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Medicamento</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Posologia</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Qtd Receitada</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Stock</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="receita-itens-body">
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="4">A carregar...</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="hidden bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3" id="modalErroReceita"></div>
+
+<div class="pt-2 flex items-center justify-between border-t border-gray-100">
+<button class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" onclick="abrirPendenciaReceita()" type="button">
+                        Marcar Pendência
+                    </button>
+<button class="px-6 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed" id="btnDispensarReceita" onclick="dispensarReceita()" type="button">
+                        Dispensar Receita
+                    </button>
+</div>
+
+<div class="hidden space-y-2 pt-2 border-t border-gray-100" id="painel-pendencia-receita">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Motivo da pendência</label>
+<textarea class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="pendencia-motivo" rows="2"></textarea>
+<div class="flex justify-end gap-3">
+<button class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" onclick="fecharPendenciaReceita()" type="button">Cancelar</button>
+<button class="px-5 py-2.5 rounded-xl bg-gray-700 text-white text-sm font-medium hover:opacity-90 transition" onclick="confirmarPendenciaReceita()" type="button">Confirmar Pendência</button>
+</div>
 </div>
 </div>
 </div>

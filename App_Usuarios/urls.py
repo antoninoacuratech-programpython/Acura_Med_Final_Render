@@ -81,8 +81,6 @@ urlpatterns = [
         name="modulo_colaboradores"
     ),
 
-    # --- CRUD de Utilizador (colaboradores) ---
-
     path(
         "modulos/colaboradores/cadastrar/",
         views.cadastrar_utilizador,
@@ -225,6 +223,38 @@ urlpatterns = [
         "modulos/farmacia/lotes/<int:id>/eliminar/",
         farmacia_views.eliminar_lote,
         name="eliminar_lote"
+    ),
+
+    path(
+        "modulos/farmacia/movimentos/",
+        farmacia_views.listar_movimentos_stock,
+        name="listar_movimentos_stock"
+    ),
+
+    # --- Farmácia processa Receitas digitais ---
+
+    path(
+        "modulos/farmacia/prescricoes/",
+        farmacia_views.listar_prescricoes_farmacia,
+        name="listar_prescricoes_farmacia"
+    ),
+
+    path(
+        "modulos/farmacia/prescricoes/<int:id>/",
+        farmacia_views.detalhe_prescricao_farmacia,
+        name="detalhe_prescricao_farmacia"
+    ),
+
+    path(
+        "modulos/farmacia/prescricoes/<int:id>/dispensar/",
+        farmacia_views.dispensar_prescricao,
+        name="dispensar_prescricao"
+    ),
+
+    path(
+        "modulos/farmacia/prescricoes/<int:id>/pendencia/",
+        farmacia_views.marcar_pendencia_prescricao,
+        name="marcar_pendencia_prescricao"
     ),
 
     path(

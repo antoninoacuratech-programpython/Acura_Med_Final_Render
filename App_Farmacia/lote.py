@@ -45,14 +45,6 @@ class Lote(models.Model):
         blank=True,
     )
 
-    preco_custo_unitario = models.DecimalField(
-        "Preço de custo unitário",
-        max_digits=12,
-        decimal_places=2,
-        blank=True,
-        null=True,
-    )
-
     data_entrada = models.DateField(
         "Data de entrada",
         auto_now_add=True,

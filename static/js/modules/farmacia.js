@@ -13,6 +13,11 @@ const FARMACIA_URLS = {
     medicamentoEliminar: (id) => `/modulos/farmacia/medicamentos/${id}/eliminar/`,
     loteCadastrar: "/modulos/farmacia/lotes/cadastrar/",
     lotesPorMedicamento: (id) => `/modulos/farmacia/medicamentos/${id}/lotes/`,
+    movimentos: "/modulos/farmacia/movimentos/",
+    prescricoes: "/modulos/farmacia/prescricoes/",
+    prescricaoDetalhe: (id) => `/modulos/farmacia/prescricoes/${id}/`,
+    prescricaoDispensar: (id) => `/modulos/farmacia/prescricoes/${id}/dispensar/`,
+    prescricaoPendencia: (id) => `/modulos/farmacia/prescricoes/${id}/pendencia/`,
     modulo: "/modulos/farmacia/",
 };
 
@@ -20,6 +25,7 @@ window.moduleInitializers = window.moduleInitializers || {};
 window.moduleInitializers.farmacia = function () {
     const busca = document.getElementById("input-search-medicamento");
     if (busca) busca.value = "";
+    atualizarBadgeReceitas();
 };
 
 // -------------------------------------------------------------------------
@@ -245,4 +251,228 @@ async function submitLote(event) {
     form.reset();
     document.getElementById("lote-medicamento-id").value = medicamentoId;
     farmaciaCarregarLotes(medicamentoId);
+}
+
+// -------------------------------------------------------------------------
+// Histórico de Movimentos
+// -------------------------------------------------------------------------
+
+function openHistoricoModal() {
+    document.getElementById("modal-historico").classList.remove("hidden");
+    carregarHistorico();
+}
+
+function closeHistoricoModal() {
+    document.getElementById("modal-historico").classList.add("hidden");
+}
+
+async function carregarHistorico() {
+    const corpo = document.getElementById("historico-body");
+    corpo.innerHTML = `<tr><td colspan="7" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
+
+    const params = new URLSearchParams();
+    const medicamentoId = document.getElementById("historico-filtro-medicamento").value;
+    const tipo = document.getElementById("historico-filtro-tipo").value;
+    const dataInicio = document.getElementById("historico-filtro-data-inicio").value;
+    const dataFim = document.getElementById("historico-filtro-data-fim").value;
+
+    if (medicamentoId) params.set("medicamento_id", medicamentoId);
+    if (tipo) params.set("tipo", tipo);
+    if (dataInicio) params.set("data_inicio", dataInicio);
+    if (dataFim) params.set("data_fim", dataFim);
+
+    try {
+        const resposta = await fetch(`${FARMACIA_URLS.movimentos}?${params.toString()}`);
+        const dados = await resposta.json();
+
+        if (!dados.ok || dados.movimentos.length === 0) {
+            corpo.innerHTML = `<tr><td colspan="7" class="py-6 px-4 text-center text-gray-400">Nenhum movimento encontrado.</td></tr>`;
+            return;
+        }
+
+        const badges = {
+            ENTRADA: "bg-teal-50 text-teal-600",
+            SAIDA: "bg-red-50 text-red-600",
+            AJUSTE: "bg-amber-50 text-amber-600",
+        };
+
+        corpo.innerHTML = dados.movimentos.map((m) => `
+            <tr class="hover:bg-gray-50/50 transition">
+                <td class="py-3 px-4 text-gray-500 whitespace-nowrap">${farmaciaFormatarDataHora(m.criado_em)}</td>
+                <td class="py-3 px-4 font-medium">${m.medicamento}</td>
+                <td class="py-3 px-4 text-gray-500">${m.numero_lote}</td>
+                <td class="py-3 px-4"><span class="${badges[m.tipo] || "bg-gray-100 text-gray-500"} text-xs font-medium px-3 py-1 rounded-full">${m.tipo_display}</span></td>
+                <td class="py-3 px-4 text-gray-500">${m.quantidade}</td>
+                <td class="py-3 px-4 text-gray-500">${m.utilizador}</td>
+                <td class="py-3 px-4 text-gray-500">${m.referencia || "—"}</td>
+            </tr>
+        `).join("");
+    } catch (erro) {
+        corpo.innerHTML = `<tr><td colspan="7" class="py-6 px-4 text-center text-gray-400">Erro ao carregar o histórico.</td></tr>`;
+    }
+}
+
+function farmaciaFormatarDataHora(isoString) {
+    const data = new Date(isoString);
+    return data.toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+// -------------------------------------------------------------------------
+// Receitas (Farmácia processa prescrições digitais)
+// -------------------------------------------------------------------------
+
+let receitaAtualId = null;
+
+async function atualizarBadgeReceitas() {
+    try {
+        const resposta = await fetch(FARMACIA_URLS.prescricoes);
+        const dados = await resposta.json();
+        const badge = document.getElementById("receitas-badge");
+        if (!badge) return;
+
+        const total = dados.ok ? dados.prescricoes.length : 0;
+        badge.textContent = total;
+        badge.classList.toggle("hidden", total === 0);
+    } catch (erro) {
+        // silencioso — o badge simplesmente não actualiza
+    }
+}
+
+function openReceitasModal() {
+    document.getElementById("modal-receitas").classList.remove("hidden");
+    carregarReceitas();
+}
+
+function closeReceitasModal() {
+    document.getElementById("modal-receitas").classList.add("hidden");
+}
+
+async function carregarReceitas() {
+    const corpo = document.getElementById("receitas-body");
+    corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
+
+    try {
+        const resposta = await fetch(FARMACIA_URLS.prescricoes);
+        const dados = await resposta.json();
+
+        if (!dados.ok || dados.prescricoes.length === 0) {
+            corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">Nenhuma receita por processar.</td></tr>`;
+            return;
+        }
+
+        corpo.innerHTML = dados.prescricoes.map((p) => `
+            <tr class="hover:bg-gray-50/50 transition">
+                <td class="py-4 px-4 font-medium">${p.paciente}</td>
+                <td class="py-4 px-4 text-gray-500">${p.medico}</td>
+                <td class="py-4 px-4 text-gray-500">${p.total_itens}</td>
+                <td class="py-4 px-4 text-gray-500 whitespace-nowrap">${farmaciaFormatarDataHora(p.criado_em)}</td>
+                <td class="py-4 px-4 text-right">
+                    <button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="abrirDetalheReceita(${p.id})">Ver</button>
+                </td>
+            </tr>
+        `).join("");
+    } catch (erro) {
+        corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">Erro ao carregar receitas.</td></tr>`;
+    }
+}
+
+async function abrirDetalheReceita(id) {
+    receitaAtualId = id;
+    document.getElementById("modalErroReceita").classList.add("hidden");
+    fecharPendenciaReceita();
+    document.getElementById("modal-detalhe-receita").classList.remove("hidden");
+
+    const corpo = document.getElementById("receita-itens-body");
+    corpo.innerHTML = `<tr><td colspan="4" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
+
+    try {
+        const resposta = await fetch(FARMACIA_URLS.prescricaoDetalhe(id));
+        const dados = await resposta.json();
+
+        if (!dados.ok) {
+            corpo.innerHTML = `<tr><td colspan="4" class="py-6 px-4 text-center text-gray-400">Erro ao carregar a receita.</td></tr>`;
+            return;
+        }
+
+        const p = dados.prescricao;
+        document.getElementById("receita-paciente-nome").textContent = p.paciente;
+        document.getElementById("receita-info-paciente").textContent = `${p.paciente} (${p.paciente_codigo})`;
+        document.getElementById("receita-info-medico").textContent = p.medico;
+        document.getElementById("receita-info-estado").textContent = p.status_display;
+
+        corpo.innerHTML = p.itens.map((item) => {
+            const badge = item.stock_suficiente
+                ? `<span class="bg-teal-50 text-teal-600 text-xs font-medium px-3 py-1 rounded-full">Disponível (${item.stock_disponivel})</span>`
+                : `<span class="bg-red-50 text-red-600 text-xs font-medium px-3 py-1 rounded-full">Insuficiente (${item.stock_disponivel})</span>`;
+
+            return `
+                <tr>
+                    <td class="py-3 px-4 font-medium">${item.medicamento}${item.dosagem ? ` <span class="text-gray-400 font-normal">(${item.dosagem})</span>` : ""}</td>
+                    <td class="py-3 px-4 text-gray-500">${item.via_administracao}${item.frequencia ? " — " + item.frequencia : ""}${item.duracao_dias ? ` — ${item.duracao_dias}d` : ""}</td>
+                    <td class="py-3 px-4 text-gray-500">${item.quantidade}</td>
+                    <td class="py-3 px-4">${badge}</td>
+                </tr>`;
+        }).join("");
+
+        const btnDispensar = document.getElementById("btnDispensarReceita");
+        btnDispensar.disabled = !p.pode_dispensar;
+    } catch (erro) {
+        corpo.innerHTML = `<tr><td colspan="4" class="py-6 px-4 text-center text-gray-400">Erro ao carregar a receita.</td></tr>`;
+    }
+}
+
+function closeDetalheReceitaModal() {
+    document.getElementById("modal-detalhe-receita").classList.add("hidden");
+    receitaAtualId = null;
+}
+
+async function dispensarReceita() {
+    if (!receitaAtualId) return;
+    const erroEl = document.getElementById("modalErroReceita");
+    erroEl.classList.add("hidden");
+
+    const dados = await farmaciaEnviar(FARMACIA_URLS.prescricaoDispensar(receitaAtualId), new FormData());
+
+    if (!dados.ok) {
+        erroEl.textContent = dados.erro;
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    closeDetalheReceitaModal();
+    carregarReceitas();
+    atualizarBadgeReceitas();
+    farmaciaRecarregarPainel();
+}
+
+function abrirPendenciaReceita() {
+    document.getElementById("painel-pendencia-receita").classList.remove("hidden");
+}
+
+function fecharPendenciaReceita() {
+    document.getElementById("painel-pendencia-receita").classList.add("hidden");
+    document.getElementById("pendencia-motivo").value = "";
+}
+
+async function confirmarPendenciaReceita() {
+    if (!receitaAtualId) return;
+    const erroEl = document.getElementById("modalErroReceita");
+    erroEl.classList.add("hidden");
+
+    const formData = new FormData();
+    formData.append("motivo", document.getElementById("pendencia-motivo").value);
+
+    const dados = await farmaciaEnviar(FARMACIA_URLS.prescricaoPendencia(receitaAtualId), formData);
+
+    if (!dados.ok) {
+        erroEl.textContent = dados.erro;
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    closeDetalheReceitaModal();
+    carregarReceitas();
+    atualizarBadgeReceitas();
 }

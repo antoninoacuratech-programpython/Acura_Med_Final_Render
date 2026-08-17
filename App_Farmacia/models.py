@@ -5,8 +5,13 @@
 
 from .medicamento import Medicamento
 from .lote import Lote
+from .movimento_stock import MovimentoStock
+from .dispensacao import Dispensacao, ItemDispensacao
 
 __all__ = [
     "Medicamento",
     "Lote",
+    "MovimentoStock",
+    "Dispensacao",
+    "ItemDispensacao",
 ]
