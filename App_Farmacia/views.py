@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from App_Usuarios.permissoes import requer_permissao
 from App_Prescricoes.prescricao_medicamento import PrescricaoMedicamento
+from App_Pacientes.documento import DocumentoPaciente
 
 from .medicamento import Medicamento
 from .lote import Lote
@@ -557,20 +558,20 @@ def listar_prescricoes_farmacia(request):
         status=PrescricaoMedicamento.Status.AGUARDANDO,
     ).select_related("paciente", "medico").order_by("criado_em")
 
-    return JsonResponse({
-        "ok": True,
-        "prescricoes": [
-            {
-                "id": p.id,
-                "paciente": p.paciente.nome_completo,
-                "paciente_codigo": p.paciente.codigo,
-                "medico": p.medico.nome_completo,
-                "total_itens": p.itens.count(),
-                "criado_em": p.criado_em.isoformat(),
-            }
-            for p in prescricoes
-        ]
-    })
+    resultado = []
+    for p in prescricoes:
+        documento_bi = p.paciente.documentos.filter(tipo=DocumentoPaciente.TipoDocumento.BI).first()
+        resultado.append({
+            "id": p.id,
+            "paciente": p.paciente.nome_completo,
+            "paciente_codigo": p.paciente.codigo,
+            "bi": documento_bi.numero if documento_bi else "",
+            "medico": p.medico.nome_completo,
+            "total_itens": p.itens.count(),
+            "criado_em": p.criado_em.isoformat(),
+        })
+
+    return JsonResponse({"ok": True, "prescricoes": resultado})
 
 
 @login_required

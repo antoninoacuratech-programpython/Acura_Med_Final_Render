@@ -340,6 +340,7 @@ async function atualizarBadgeReceitas() {
 
 function openReceitasModal() {
     document.getElementById("modal-receitas").classList.remove("hidden");
+    document.getElementById("input-search-receitas").value = "";
     carregarReceitas();
 }
 
@@ -349,20 +350,21 @@ function closeReceitasModal() {
 
 async function carregarReceitas() {
     const corpo = document.getElementById("receitas-body");
-    corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
+    corpo.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
 
     try {
         const resposta = await fetch(FARMACIA_URLS.prescricoes);
         const dados = await resposta.json();
 
         if (!dados.ok || dados.prescricoes.length === 0) {
-            corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">Nenhuma receita por processar.</td></tr>`;
+            corpo.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-400">Nenhuma receita por processar.</td></tr>`;
             return;
         }
 
         corpo.innerHTML = dados.prescricoes.map((p) => `
-            <tr class="hover:bg-gray-50/50 transition">
+            <tr class="hover:bg-gray-50/50 transition" data-search="${p.paciente.toLowerCase()} ${p.paciente_codigo.toLowerCase()} ${(p.bi || "").toLowerCase()}">
                 <td class="py-4 px-4 font-medium">${p.paciente}</td>
+                <td class="py-4 px-4 text-gray-500">${p.bi || "—"}</td>
                 <td class="py-4 px-4 text-gray-500">${p.medico}</td>
                 <td class="py-4 px-4 text-gray-500">${p.total_itens}</td>
                 <td class="py-4 px-4 text-gray-500 whitespace-nowrap">${farmaciaFormatarDataHora(p.criado_em)}</td>
@@ -372,8 +374,15 @@ async function carregarReceitas() {
             </tr>
         `).join("");
     } catch (erro) {
-        corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">Erro ao carregar receitas.</td></tr>`;
+        corpo.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-400">Erro ao carregar receitas.</td></tr>`;
     }
+}
+
+function filterReceitas(termo) {
+    const alvo = termo.trim().toLowerCase();
+    document.querySelectorAll("#receitas-body tr[data-search]").forEach((linha) => {
+        linha.style.display = linha.dataset.search.includes(alvo) ? "" : "none";
+    });
 }
 
 async function abrirDetalheReceita(id) {
