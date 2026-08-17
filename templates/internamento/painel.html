@@ -1,0 +1,128 @@
+{% load static %}
+<section class="panel" id="internamentoPanel">
+<div class="flex-1 flex flex-col h-full bg-[#C4C5E0]">
+<!-- STATS CARDS -->
+<div class="grid grid-cols-4 gap-6 mb-8">
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">Naves</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ total_naves }}</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-solid fa-building"></i>
+</div>
+</div>
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">Quartos</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ total_quartos }}</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-solid fa-door-closed"></i>
+</div>
+</div>
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">Capacidade Total</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ total_capacidade }}</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-solid fa-bed-pulse"></i>
+</div>
+</div>
+<div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 font-medium mb-1">Vagas Disponíveis</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ total_vagas }}</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center text-lg shadow-inner">
+<i class="fa-solid fa-bed"></i>
+</div>
+</div>
+</div>
+
+<!-- NAVES -->
+<div class="bg-white rounded-3xl p-6 shadow-sm mb-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold text-gray-800">Naves</h3>
+<button class="flex items-center justify-center gap-2 h-10 bg-[#F36A2D] text-white hover:opacity-60 px-5 rounded-full font-medium text-sm transition shadow-sm" onclick="openNaveModal()">
+<i class="fa-solid fa-circle-plus"></i>
+<span>Nova Nave</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nome</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Descrição</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ação</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700">
+{% for n in naves %}
+<tr class="hover:bg-gray-50/50 transition">
+<td class="py-4 px-4 font-medium">{{ n.nome }}</td>
+<td class="py-4 px-4 text-gray-500">{{ n.descricao|default:"—" }}</td>
+<td class="py-4 px-4 text-right">
+<button class="w-8 h-8 rounded-full inline-flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-gray-100 transition" onclick="eliminarNave({{ n.id }}, '{{ n.nome|escapejs }}')" title="Eliminar">
+<i class="fa-solid fa-trash-can text-xs"></i>
+</button>
+</td>
+</tr>
+{% empty %}
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="3">Nenhuma nave cadastrada.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- QUARTOS -->
+<div class="bg-white rounded-3xl p-6 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold text-gray-800">Quartos</h3>
+<button class="flex items-center justify-center gap-2 h-10 bg-[#F36A2D] text-white hover:opacity-60 px-5 rounded-full font-medium text-sm transition shadow-sm" onclick="openQuartoModal()">
+<i class="fa-solid fa-circle-plus"></i>
+<span>Novo Quarto</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nave</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nº</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tipo</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Ocupação</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ação</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700">
+{% for q in quartos %}
+<tr class="hover:bg-gray-50/50 transition">
+<td class="py-4 px-4 font-medium">{{ q.nave.nome }}</td>
+<td class="py-4 px-4 text-gray-500">{{ q.numero }}</td>
+<td class="py-4 px-4 text-gray-500">{{ q.get_tipo_display }}</td>
+<td class="py-4 px-4">
+<span class="{% if q.vagas_disponiveis > 0 %}bg-teal-50 text-teal-600{% else %}bg-red-50 text-red-600{% endif %} text-xs font-medium px-3 py-1 rounded-full">
+{{ q.ocupados }}/{{ q.capacidade }}
+</span>
+</td>
+<td class="py-4 px-4 text-right">
+<button class="w-8 h-8 rounded-full inline-flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-gray-100 transition" onclick="eliminarQuarto({{ q.id }}, '{{ q.numero|escapejs }}')" title="Eliminar">
+<i class="fa-solid fa-trash-can text-xs"></i>
+</button>
+</td>
+</tr>
+{% empty %}
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="5">Nenhum quarto cadastrado.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+
+{% include 'internamento/modais.html' %}

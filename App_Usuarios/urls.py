@@ -12,6 +12,7 @@ from App_Farmacia import views as farmacia_views
 from App_Atendimentos import views as atendimento_views
 from App_Prescricoes import views as prescricoes_views
 from App_Laboratorio import views as laboratorio_views
+from App_Internamento import views as internamento_views
 
 
 urlpatterns = [
@@ -430,6 +431,56 @@ urlpatterns = [
         laboratorio_views.detalhe_resultado_exame,
         name="detalhe_resultado_exame"
     ),
+    # 1) urls.py — no topo:
+#    
+#
+# Dentro de urlpatterns:
+
+    path(
+        "modulos/internamento/",
+        internamento_views.modulo_internamento,
+        name="modulo_internamento"
+    ),
+
+    path(
+        "modulos/internamento/naves/cadastrar/",
+        internamento_views.cadastrar_nave,
+        name="cadastrar_nave"
+    ),
+
+    path(
+        "modulos/internamento/naves/<int:id>/eliminar/",
+        internamento_views.eliminar_nave,
+        name="eliminar_nave"
+    ),
+
+    path(
+        "modulos/internamento/quartos/cadastrar/",
+        internamento_views.cadastrar_quarto,
+        name="cadastrar_quarto"
+    ),
+
+    path(
+        "modulos/internamento/quartos/<int:id>/eliminar/",
+        internamento_views.eliminar_quarto,
+        name="eliminar_quarto"
+    ),
+
+
+# 2) Sidebar:
+#
+# {% if request.user|tem_permissao:"nave.gerir" %}
+# <li><a href="#" data-module="internamento" data-title="Internamento"><i class="fa-solid fa-bed-pulse"></i><span>Internamento</span></a></li>
+# {% endif %}
+
+
+# 3) navigation.js — acrescentar "internamento" aos dois objectos:
+#
+# moduleMap: ..., internamento: "Internamento", ...
+# moduleScripts: ..., internamento: "/static/js/modules/internamento.js", ...
+
+
+# 4) Permissões novas: nave.cadastrar, nave.gerir
 
 
 
