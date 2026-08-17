@@ -3,10 +3,6 @@ from django.db import models
 from .nave import Nave
 
 
-# Quarto dentro de uma Nave. Não há leitos numerados individualmente —
-# cada quarto tem uma capacidade (nº máximo de internantes em simultâneo),
-# e a disponibilidade é calculada a partir de quantos internamentos
-# activos existem ligados a este quarto (ver Internamento, passo 2).
 class Quarto(models.Model):
 
     class Tipo(models.TextChoices):
@@ -56,8 +52,7 @@ class Quarto(models.Model):
 
     @property
     def ocupados(self):
-        # Import local para evitar import circular — Internamento (passo 2)
-        # ainda vai referenciar Quarto.
+       
         from .internamento import Internamento
         return self.internamentos.filter(status=Internamento.Status.INTERNADO).count()
 

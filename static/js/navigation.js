@@ -1,79 +1,567 @@
 document.addEventListener("DOMContentLoaded", () => {
     const workspace = document.getElementById("workspace");
     const pageTitle = document.getElementById("pageTitle");
-    const menuLinks = document.querySelectorAll(".sidebar-menu a[data-module]");
-    const moduleMap = { dashboard: "Visão Geral", atendimento: "Atendimentos", encaminhamento: "Encaminhamentos", convenios: "Convênios & Guias", colaboradores: "Colaboradores", pacientes: "Pacientes", agendamentos: "Agendamentos", laboratorio: "Laboratório", farmacia: "Farmácia", meus_atendimentos: "Meus Atendimentos", triagem: "Triagem", configuracoes: "Configurações", perfis: "Perfis", permissoes: "Permissões" };
 
-    function setActive(module, submodule) {
+    const menuLinks = document.querySelectorAll(
+        ".sidebar-menu a[data-module]"
+    );
+
+    // ============================================================
+    // MAPA DOS MÓDULOS
+    // ============================================================
+
+    const moduleMap = {
+        dashboard: "Visão Geral",
+        atendimento: "Atendimentos",
+        encaminhamento: "Encaminhamentos",
+        convenios: "Convênios & Guias",
+        colaboradores: "Colaboradores",
+        pacientes: "Pacientes",
+        agendamentos: "Agendamentos",
+        laboratorio: "Laboratório",
+        farmacia: "Farmácia",
+        meus_atendimentos: "Meus Atendimentos",
+        triagem: "Triagem",
+        internamento: "Internamento",
+        configuracoes: "Configurações",
+        perfis: "Perfis",
+        permissoes: "Permissões"
+    };
+
+    // ============================================================
+    // SCRIPTS DOS MÓDULOS
+    // ============================================================
+
+    const moduleScripts = {
+        dashboard: "/static/js/modules/dashboard.js",
+        pacientes: "/static/js/modules/pacientes.js",
+        atendimento: "/static/js/modules/atendimento.js",
+        encaminhamento: "/static/js/modules/encaminhamento.js",
+        convenios: "/static/js/modules/convenios.js",
+        colaboradores: "/static/js/modules/colaboradores.js",
+        agendamentos: "/static/js/modules/agendamentos.js",
+        laboratorio: "/static/js/modules/laboratorio.js",
+        farmacia: "/static/js/modules/farmacia.js",
+        meus_atendimentos: "/static/js/modules/meus_atendimentos.js",
+        triagem: "/static/js/modules/triagem.js",
+
+        // ========================================================
+        // INTERNAMENTO
+        // ========================================================
+        internamento: "/static/js/modules/internamento.js",
+
+        configuracoes: "/static/js/modules/configuracoes.js",
+        perfis: "/static/js/modules/perfis.js",
+        permissoes: "/static/js/modules/permissoes.js"
+    };
+
+    // ============================================================
+    // CONTROLO DO MENU ATIVO
+    // ============================================================
+
+    function setActive(module, submodule = null) {
         menuLinks.forEach(link => {
-            const isActive = link.dataset.module === module && (link.dataset.submodule || null) === (submodule || null);
-            link.closest("li")?.classList.toggle("active", isActive);
+            const linkModule = link.dataset.module;
+            const linkSubmodule = link.dataset.submodule || null;
+
+            const isActive =
+                linkModule === module &&
+                linkSubmodule === submodule;
+
+            link.closest("li")?.classList.toggle(
+                "active",
+                isActive
+            );
         });
 
-        // abre o submenu-pai correspondente e fecha os outros
-        document.querySelectorAll(".sidebar-menu .has-submenu").forEach(parentLi => {
-            const hasActiveChild = parentLi.querySelector(`.submenu a[data-module="${module}"]`) !== null;
-            parentLi.classList.toggle("open", hasActiveChild);
-        });
+        // Fecha todos os submenus
+        document
+            .querySelectorAll(".sidebar-menu .has-submenu")
+            .forEach(parentLi => {
+                parentLi.classList.remove("open");
+            });
+
+        // Abre somente o submenu correspondente
+        document
+            .querySelectorAll(".sidebar-menu .has-submenu")
+            .forEach(parentLi => {
+
+                const activeChild = parentLi.querySelector(
+                    `.submenu a[data-module="${module}"]`
+                );
+
+                if (activeChild) {
+                    parentLi.classList.add("open");
+                }
+            });
     }
 
-    const moduleScripts = { dashboard: "/static/js/modules/dashboard.js", pacientes: "/static/js/modules/pacientes.js", atendimento: "/static/js/modules/atendimento.js", encaminhamento: "/static/js/modules/encaminhamento.js", convenios: "/static/js/modules/convenios.js", colaboradores: "/static/js/modules/colaboradores.js", agendamentos: "/static/js/modules/agendamentos.js", laboratorio: "/static/js/modules/laboratorio.js", farmacia: "/static/js/modules/farmacia.js", meus_atendimentos: "/static/js/modules/meus_atendimentos.js", triagem: "/static/js/modules/triagem.js", configuracoes: "/static/js/modules/configuracoes.js", perfis: "/static/js/modules/perfis.js", permissoes: "/static/js/modules/permissoes.js" };
-    async function initModule(module, submodule) {
+    // ============================================================
+    // CARREGAMENTO DO JAVASCRIPT DO MÓDULO
+    // ============================================================
+
+    async function initModule(module, submodule = null) {
+
         const src = moduleScripts[module];
-        if (src && !document.querySelector(`script[data-module-script="${module}"]`)) {
-            await new Promise((resolve, reject) => { const s = document.createElement("script"); s.src = src; s.dataset.moduleScript = module; s.onload = resolve; s.onerror = reject; document.body.appendChild(s); });
-        }
-        const fn = window.moduleInitializers?.[module];
-        if (typeof fn === "function") fn(submodule);
-    }
 
-    async function loadModule(module, title, options = {}) {
-        if (!workspace || !module) return;
-        const submodule = options.submodule || null;
-        workspace.classList.add("workspace-loading");
-        setActive(module, submodule);
-        if (pageTitle) pageTitle.textContent = title || moduleMap[module] || "Painel";
-        try {
-            const base = options.url || `/modulos/${module}/`;
-            const endpoint = submodule ? `${base}${base.includes("?") ? "&" : "?"}tab=${submodule}` : base;
-            const response = await fetch(endpoint, { headers: { "X-Requested-With": "XMLHttpRequest" } });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            workspace.innerHTML = await response.text();
-            await initModule(module, submodule);
-            if (options.openModal) {
-                const modal = document.getElementById(options.openModal);
-                modal?.classList.remove("hidden");
+        if (src) {
+
+            const existingScript = document.querySelector(
+                `script[data-module-script="${module}"]`
+            );
+
+            if (!existingScript) {
+
+                await new Promise((resolve, reject) => {
+
+                    const script = document.createElement("script");
+
+                    script.src = src;
+
+                    script.dataset.moduleScript = module;
+
+                    script.onload = () => {
+                        console.log(
+                            `Módulo "${module}" carregado com sucesso.`
+                        );
+
+                        resolve();
+                    };
+
+                    script.onerror = () => {
+                        console.error(
+                            `Erro ao carregar o script: ${src}`
+                        );
+
+                        reject(
+                            new Error(
+                                `Não foi possível carregar ${src}`
+                            )
+                        );
+                    };
+
+                    document.body.appendChild(script);
+                });
             }
-        } catch (error) {
-            console.error(error);
-            workspace.innerHTML = `<div class="content-card"><h3>Não foi possível carregar o módulo</h3><p>Verifique a rota Django <strong>/modulos/${module}/</strong>.</p></div>`;
-        } finally { workspace.classList.remove("workspace-loading"); }
+        }
+
+        // Executa o inicializador do módulo
+        const initializer =
+            window.moduleInitializers?.[module];
+
+        if (typeof initializer === "function") {
+
+            try {
+
+                await initializer(submodule);
+
+            } catch (error) {
+
+                console.error(
+                    `Erro ao inicializar o módulo "${module}":`,
+                    error
+                );
+            }
+        }
     }
 
-    // itens finais (com data-module): carregam o módulo/submódulo
-    menuLinks.forEach(link => link.addEventListener("click", e => {
-        e.preventDefault();
-        loadModule(link.dataset.module, link.dataset.title, { submodule: link.dataset.submodule });
-    }));
+    // ============================================================
+    // CARREGAMENTO DO MÓDULO
+    // ============================================================
 
-    // cabeçalhos de submenu (sem data-module): só fazem accordion, não navegam
-    document.querySelectorAll(".sidebar-menu .submenu-toggle").forEach(toggle => {
-        toggle.addEventListener("click", e => {
-            e.preventDefault();
-            const parentLi = toggle.closest(".has-submenu");
-            const wasOpen = parentLi.classList.contains("open");
-            document.querySelectorAll(".sidebar-menu .has-submenu.open").forEach(li => li.classList.remove("open"));
-            if (!wasOpen) parentLi.classList.add("open");
-        });
+    async function loadModule(
+        module,
+        title = null,
+        options = {}
+    ) {
+
+        if (!workspace || !module) {
+            console.warn(
+                "Workspace ou módulo não encontrado."
+            );
+
+            return;
+        }
+
+        const submodule =
+            options.submodule || null;
+
+        // Estado de carregamento
+        workspace.classList.add(
+            "workspace-loading"
+        );
+
+        // Menu ativo
+        setActive(
+            module,
+            submodule
+        );
+
+        // Título da página
+        if (pageTitle) {
+
+            pageTitle.textContent =
+                title ||
+                moduleMap[module] ||
+                "Painel";
+        }
+
+        try {
+
+            // ====================================================
+            // URL DO MÓDULO
+            // ====================================================
+
+            const base =
+                options.url ||
+                `/modulos/${module}/`;
+
+            let endpoint = base;
+
+            // ====================================================
+            // SUBMÓDULO / TAB
+            // ====================================================
+
+            if (submodule) {
+
+                endpoint =
+                    `${base}${base.includes("?") ? "&" : "?"}tab=${encodeURIComponent(submodule)}`;
+            }
+
+            console.log(
+                `Carregando módulo: ${module}`
+            );
+
+            console.log(
+                `Endpoint: ${endpoint}`
+            );
+
+            // ====================================================
+            // REQUEST DJANGO
+            // ====================================================
+
+            const response = await fetch(
+                endpoint,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "X-Requested-With":
+                            "XMLHttpRequest",
+
+                        "Accept":
+                            "text/html"
+                    },
+
+                    credentials: "same-origin"
+                }
+            );
+
+            // ====================================================
+            // VERIFICA RESPOSTA
+            // ====================================================
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+            }
+
+            const html =
+                await response.text();
+
+            // ====================================================
+            // INSERE HTML NO WORKSPACE
+            // ====================================================
+
+            workspace.innerHTML = html;
+
+            // ====================================================
+            // INICIALIZA JAVASCRIPT DO MÓDULO
+            // ====================================================
+
+            await initModule(
+                module,
+                submodule
+            );
+
+            // ====================================================
+            // ABRIR MODAL AUTOMATICAMENTE
+            // ====================================================
+
+            if (options.openModal) {
+
+                const modal =
+                    document.getElementById(
+                        options.openModal
+                    );
+
+                if (modal) {
+
+                    modal.classList.remove(
+                        "hidden"
+                    );
+                }
+            }
+
+        } catch (error) {
+
+            console.error(
+                `Erro ao carregar módulo "${module}":`,
+                error
+            );
+
+            // ====================================================
+            // MENSAGEM DE ERRO
+            // ====================================================
+
+            workspace.innerHTML = `
+                <div class="content-card">
+                    <div class="content-card-body">
+
+                        <h3>
+                            Não foi possível carregar o módulo
+                        </h3>
+
+                        <p>
+                            Ocorreu um erro ao carregar
+                            <strong>${moduleMap[module] || module}</strong>.
+                        </p>
+
+                        <p>
+                            Verifique a rota Django:
+                        </p>
+
+                        <code>
+                            /modulos/${module}/
+                        </code>
+
+                    </div>
+                </div>
+            `;
+        } finally {
+
+            workspace.classList.remove(
+                "workspace-loading"
+            );
+        }
+    }
+
+    // ============================================================
+    // CLIQUES DOS ITENS DO MENU
+    // ============================================================
+
+    menuLinks.forEach(link => {
+
+        link.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                const module =
+                    link.dataset.module;
+
+                const title =
+                    link.dataset.title ||
+                    moduleMap[module];
+
+                const submodule =
+                    link.dataset.submodule ||
+                    null;
+
+                loadModule(
+                    module,
+                    title,
+                    {
+                        submodule
+                    }
+                );
+            }
+        );
     });
 
-    document.getElementById("settingsBtn")?.addEventListener("click", () => loadModule("configuracoes", "Configurações"));
-    document.querySelectorAll(".dropdown-item[data-module]").forEach(link => link.addEventListener("click", e => {
-        e.preventDefault();
-        loadModule(link.dataset.module, link.dataset.title, { submodule: link.dataset.submodule });
-    }));
+    // ============================================================
+    // SUBMENUS / ACCORDION
+    // ============================================================
 
-    window.loadModule = loadModule;
-    window.loadModuleAndOpenModal = (module, modalId, title) => loadModule(module, title, { openModal: modalId });
-    loadModule("dashboard", "Visão Geral");
+    document
+        .querySelectorAll(
+            ".sidebar-menu .submenu-toggle"
+        )
+        .forEach(toggle => {
+
+            toggle.addEventListener(
+                "click",
+                event => {
+
+                    event.preventDefault();
+
+                    const parentLi =
+                        toggle.closest(
+                            ".has-submenu"
+                        );
+
+                    if (!parentLi) {
+                        return;
+                    }
+
+                    const wasOpen =
+                        parentLi.classList.contains(
+                            "open"
+                        );
+
+                    // Fecha outros
+                    document
+                        .querySelectorAll(
+                            ".sidebar-menu .has-submenu.open"
+                        )
+                        .forEach(li => {
+
+                            if (li !== parentLi) {
+                                li.classList.remove(
+                                    "open"
+                                );
+                            }
+                        });
+
+                    // Alterna o atual
+                    parentLi.classList.toggle(
+                        "open",
+                        !wasOpen
+                    );
+                }
+            );
+        });
+
+    // ============================================================
+    // BOTÃO DE CONFIGURAÇÕES
+    // ============================================================
+
+    document
+        .getElementById("settingsBtn")
+        ?.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                loadModule(
+                    "configuracoes",
+                    "Configurações"
+                );
+            }
+        );
+
+    // ============================================================
+    // DROPDOWN
+    // ============================================================
+
+    document
+        .querySelectorAll(
+            ".dropdown-item[data-module]"
+        )
+        .forEach(link => {
+
+            link.addEventListener(
+                "click",
+                event => {
+
+                    event.preventDefault();
+
+                    const module =
+                        link.dataset.module;
+
+                    const title =
+                        link.dataset.title ||
+                        moduleMap[module];
+
+                    const submodule =
+                        link.dataset.submodule ||
+                        null;
+
+                    loadModule(
+                        module,
+                        title,
+                        {
+                            submodule
+                        }
+                    );
+                }
+            );
+        });
+
+    // ============================================================
+    // FUNÇÕES GLOBAIS
+    // ============================================================
+
+    window.loadModule =
+        loadModule;
+
+    window.loadModuleAndOpenModal =
+        function (
+            module,
+            modalId,
+            title = null
+        ) {
+
+            loadModule(
+                module,
+                title,
+                {
+                    openModal: modalId
+                }
+            );
+        };
+
+    // ============================================================
+    // EVENTO GLOBAL PARA RECARREGAR UM MÓDULO
+    // ============================================================
+
+    window.reloadCurrentModule =
+        function () {
+
+            const activeLink =
+                document.querySelector(
+                    ".sidebar-menu a[data-module].active"
+                );
+
+            if (!activeLink) {
+                loadModule(
+                    "dashboard",
+                    "Visão Geral"
+                );
+
+                return;
+            }
+
+            const module =
+                activeLink.dataset.module;
+
+            const title =
+                activeLink.dataset.title ||
+                moduleMap[module];
+
+            const submodule =
+                activeLink.dataset.submodule ||
+                null;
+
+            loadModule(
+                module,
+                title,
+                {
+                    submodule
+                }
+            );
+        };
+
+    // ============================================================
+    // INICIALIZAÇÃO
+    // ============================================================
+
+    loadModule(
+        "dashboard",
+        "Visão Geral"
+    );
 });

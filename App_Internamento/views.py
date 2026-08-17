@@ -2,9 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import ProtectedError, Sum
 from django.http import JsonResponse
 from django.shortcuts import render
-
 from App_Usuarios.permissoes import requer_permissao
-
 from .nave import Nave
 from .quarto import Quarto
 
