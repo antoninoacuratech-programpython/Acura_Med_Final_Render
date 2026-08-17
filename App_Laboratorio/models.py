@@ -1,15 +1,5 @@
 from .tipo_exame import TipoExame
-from .requisicao import Requisicao
-from .amostra import Amostra
-from .exame_solicitado import ExameSolicitado
-from .resultado import Resultado
-from .livro_saida import LivroSaida
+from .solicitacao_exame import SolicitacaoExame
+from .item_solicitacao_exame import ItemSolicitacaoExame
 
-__all__ = [
-    "TipoExame",
-    "Requisicao",
-    "Amostra",
-    "ExameSolicitado",
-    "Resultado",
-    "LivroSaida",
-]
+__all__ = ["TipoExame", "SolicitacaoExame", "ItemSolicitacaoExame"]

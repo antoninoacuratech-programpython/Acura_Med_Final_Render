@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .tipo_exame import TipoExame
+from .item_solicitacao_exame import TipoExame
 
 
 @admin.register(TipoExame)

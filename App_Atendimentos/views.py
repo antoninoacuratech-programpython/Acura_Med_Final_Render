@@ -13,6 +13,7 @@ from App_Pacientes.paciente import Paciente
 from App_Pacientes.documento import DocumentoPaciente
 from App_Agendamentos.agendamento import Agendamento
 from App_Farmacia.medicamento import Medicamento
+from App_Laboratorio.tipo_exame import TipoExame
 
 from .atendimento import Atendimento
 from .consulta import Consulta
@@ -398,6 +399,7 @@ def ficha_atendimento(request, id):
 
     consulta, _ = Consulta.objects.get_or_create(atendimento=atendimento)
     medicamentos = Medicamento.objects.filter(ativo=True).order_by("nome")
+    exames = TipoExame.objects.filter(ativo=True).order_by("nome")
 
     documento_bi = atendimento.paciente.documentos.filter(
         tipo=DocumentoPaciente.TipoDocumento.BI
@@ -410,6 +412,7 @@ def ficha_atendimento(request, id):
             "atendimento": atendimento,
             "consulta": consulta,
             "medicamentos": medicamentos,
+            "exames": exames,
             "documento_bi": documento_bi,
         },
     )

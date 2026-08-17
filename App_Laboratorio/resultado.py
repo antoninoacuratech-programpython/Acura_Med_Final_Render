@@ -1,7 +1,7 @@
 from django.db import models
 
 from App_Usuarios.ultilizador import Utilizador
-from .exame_solicitado import ExameSolicitado
+from .solicitacao_exame import ExameSolicitado
 
 
 class Resultado(models.Model):

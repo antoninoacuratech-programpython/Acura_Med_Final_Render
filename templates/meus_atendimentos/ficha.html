@@ -125,10 +125,13 @@
 </label>
 </div>
 
-<!-- Painel: Solicitar Exame (placeholder) -->
-<div class="hidden bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center text-sm text-gray-500 mb-4" id="painel-conduta-SOLICITAR_EXAME">
-<i class="fa-solid fa-circle-info mr-1"></i>
-Solicitação de exames será ligada ao módulo de Laboratório — ainda não disponível.
+<!-- Painel: Solicitar Exame (estruturado, liga ao Laboratório) -->
+<div class="hidden border border-gray-200 rounded-xl p-4 mb-4" id="painel-conduta-SOLICITAR_EXAME">
+<h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Exames a Solicitar</h4>
+<div id="itens-exame-ficha" class="space-y-4"></div>
+<button class="flex items-center gap-2 text-sm font-medium text-[#F36A2D] hover:underline mt-3" onclick="adicionarLinhaExameFicha()" type="button">
+<i class="fa-solid fa-circle-plus"></i> Adicionar exame
+</button>
 </div>
 
 <!-- Painel: Internar (placeholder) -->
@@ -220,6 +223,30 @@ Paciente terá alta ao finalizar este atendimento.
 <div class="col-span-2 md:col-span-12 flex justify-end">
 <button class="text-red-500 hover:text-red-700 text-xs" onclick="this.closest('.linha-prescricao').remove()" type="button">
 <i class="fa-solid fa-trash-can"></i> Remover
+</button>
+</div>
+</div>
+</template>
+
+<!-- Template de uma linha de exame — clonado por JS -->
+<template id="template-linha-exame-ficha">
+<div class="grid grid-cols-12 gap-3 items-start border border-gray-200 rounded-xl p-4 linha-exame">
+<div class="col-span-12 md:col-span-8 space-y-1">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Exame</label>
+<select class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="item_tipo_exame_id[]" required>
+<option value="">Seleccione...</option>
+{% for e in exames %}
+<option value="{{ e.id }}">{{ e.nome }} — {{ e.get_categoria_display }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="col-span-10 md:col-span-3 space-y-1">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Observações</label>
+<input class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="item_observacoes[]" placeholder="Opcional" type="text"/>
+</div>
+<div class="col-span-2 md:col-span-1 flex items-end justify-end pb-1">
+<button class="text-red-500 hover:text-red-700 text-xs" onclick="this.closest('.linha-exame').remove()" type="button">
+<i class="fa-solid fa-trash-can"></i>
 </button>
 </div>
 </div>

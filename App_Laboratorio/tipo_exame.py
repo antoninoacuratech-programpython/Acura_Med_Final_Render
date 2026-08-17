@@ -1,10 +1,5 @@
 from django.db import models
 
-
-# Catálogo de exames laboratoriais, comum a todos os hospitais da
-# plataforma (mesmo padrão de Medicamento na Farmácia). É só a ficha
-# técnica do exame — não guarda resultados nem solicitações, isso é
-# feito por outros models que se ligam a este.
 class TipoExame(models.Model):
 
     class Categoria(models.TextChoices):

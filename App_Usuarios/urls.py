@@ -391,6 +391,45 @@ urlpatterns = [
         laboratorio_views.eliminar_tipo_exame,
         name="eliminar_tipo_exame"
     ),
+    path(
+        "modulos/laboratorio/solicitacoes/cadastrar/",
+        laboratorio_views.cadastrar_solicitacao_exame,
+        name="cadastrar_solicitacao_exame"
+    ),
+    path(
+        "modulos/laboratorio/solicitacoes/",
+        laboratorio_views.listar_solicitacoes_laboratorio,
+        name="listar_solicitacoes_laboratorio"
+    ),
+
+    path(
+        "modulos/laboratorio/solicitacoes/<int:id>/",
+        laboratorio_views.detalhe_solicitacao_laboratorio,
+        name="detalhe_solicitacao_laboratorio"
+    ),
+
+    path(
+        "modulos/laboratorio/solicitacoes/<int:id>/colher/",
+        laboratorio_views.registar_colheita,
+        name="registar_colheita"
+    ),
+
+    path(
+        "modulos/laboratorio/solicitacoes/<int:id>/concluir/",
+        laboratorio_views.concluir_solicitacao_laboratorio,
+        name="concluir_solicitacao_laboratorio"
+    ),
+    path(
+        "modulos/laboratorio/resultados/",
+        laboratorio_views.listar_resultados_exame,
+        name="listar_resultados_exame"
+    ),
+
+    path(
+        "modulos/laboratorio/resultados/<int:id>/",
+        laboratorio_views.detalhe_resultado_exame,
+        name="detalhe_resultado_exame"
+    ),
 
 
 

@@ -2,7 +2,7 @@ from django.db import models
 
 from App_Usuarios.ultilizador import Utilizador
 from .requisicao import Requisicao
-from .tipo_exame import TipoExame
+from .item_solicitacao_exame import TipoExame
 
 
 class Amostra(models.Model):

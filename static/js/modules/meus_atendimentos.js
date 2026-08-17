@@ -6,6 +6,9 @@ const MEUS_ATENDIMENTOS_URLS = {
     ficha: (id) => `/modulos/meus_atendimentos/ficha/${id}/`,
     cadastrarConsulta: (atendimentoId) => `/modulos/atendimento/${atendimentoId}/consulta/`,
     cadastrarPrescricao: "/modulos/prescricoes/cadastrar/",
+    cadastrarSolicitacaoExame: "/modulos/laboratorio/solicitacoes/cadastrar/",
+    resultados: "/modulos/laboratorio/resultados/",
+    resultadoDetalhe: (id) => `/modulos/laboratorio/resultados/${id}/`,
 };
 
 // O mesmo script serve tanto a fila (lista) como a ficha (formulário) —
@@ -109,14 +112,11 @@ async function atenderPaciente(atendimentoId) {
 
 function initFichaAtendimento() {
     // Mostra o painel da conduta já seleccionada (caso seja um rascunho
-    // reaberto) e garante pelo menos uma linha de medicamento se a
-    // conduta já for Prescrição.
+    // reaberto) e garante pelo menos uma linha pronta (medicamento ou
+    // exame, consoante a conduta).
     const marcado = document.querySelector('input[name="conduta"]:checked');
     if (marcado) {
         mudarConduta(marcado.value);
-        if (marcado.value === "PRESCRICAO" && !document.getElementById("itens-prescricao-ficha").children.length) {
-            adicionarLinhaPrescricaoFicha();
-        }
     }
 }
 
@@ -128,6 +128,16 @@ function mudarConduta(valor) {
     if (valor === "PRESCRICAO" && !document.getElementById("itens-prescricao-ficha").children.length) {
         adicionarLinhaPrescricaoFicha();
     }
+
+    if (valor === "SOLICITAR_EXAME" && !document.getElementById("itens-exame-ficha").children.length) {
+        adicionarLinhaExameFicha();
+    }
+}
+
+function adicionarLinhaExameFicha() {
+    const template = document.getElementById("template-linha-exame-ficha");
+    const clone = template.content.cloneNode(true);
+    document.getElementById("itens-exame-ficha").appendChild(clone);
 }
 
 function adicionarLinhaPrescricaoFicha() {
@@ -191,6 +201,42 @@ async function guardarFicha(finalizar) {
         }
     }
 
+    // Mesma lógica para Solicitar Exame: envia a solicitação primeiro,
+    // só finaliza a consulta se isso tiver sucesso.
+    if (finalizar && condutaSelecionada === "SOLICITAR_EXAME") {
+        if (!document.getElementById("itens-exame-ficha").children.length) {
+            erroEl.textContent = "Adicione pelo menos um exame antes de finalizar.";
+            erroEl.classList.remove("hidden");
+            return;
+        }
+
+        const dadosExame = new FormData();
+        dadosExame.append("solicitacao_atendimento_id", atendimentoId);
+        dadosExame.append("solicitacao_observacoes", form.observacoes_condutas.value);
+
+        document.querySelectorAll("#itens-exame-ficha select[name='item_tipo_exame_id[]']").forEach((el) => dadosExame.append("item_tipo_exame_id[]", el.value));
+        document.querySelectorAll("#itens-exame-ficha input[name='item_observacoes[]']").forEach((el) => dadosExame.append("item_observacoes[]", el.value));
+
+        try {
+            const respostaExame = await fetch(MEUS_ATENDIMENTOS_URLS.cadastrarSolicitacaoExame, {
+                method: "POST",
+                headers: { "X-CSRFToken": meusAtendimentosCsrfToken() },
+                body: dadosExame,
+            });
+            const resultadoExame = await respostaExame.json();
+
+            if (!respostaExame.ok || !resultadoExame.ok) {
+                erroEl.textContent = resultadoExame.erro || "Erro ao enviar a solicitação ao laboratório.";
+                erroEl.classList.remove("hidden");
+                return;
+            }
+        } catch (e) {
+            erroEl.textContent = "Falha de conexão ao enviar a solicitação de exame.";
+            erroEl.classList.remove("hidden");
+            return;
+        }
+    }
+
     const dadosConsulta = new FormData(form);
     dadosConsulta.set("finalizar", finalizar ? "1" : "0");
 
@@ -217,4 +263,85 @@ async function guardarFicha(finalizar) {
         erroEl.textContent = "Falha de conexão. Tente novamente.";
         erroEl.classList.remove("hidden");
     }
+}
+
+// -------------------------------------------------------------------------
+// Resultados de Exames (o médico consulta, só-leitura)
+// -------------------------------------------------------------------------
+
+function meusAtendimentosFormatarDataHora(isoString) {
+    if (!isoString) return "—";
+    const data = new Date(isoString);
+    return data.toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function openResultadosModal() {
+    document.getElementById("modal-resultados").classList.remove("hidden");
+    carregarResultados();
+}
+
+function closeResultadosModal() {
+    document.getElementById("modal-resultados").classList.add("hidden");
+}
+
+async function carregarResultados() {
+    const corpo = document.getElementById("resultados-body");
+    corpo.innerHTML = `<tr><td colspan="4" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
+
+    try {
+        const resposta = await fetch(MEUS_ATENDIMENTOS_URLS.resultados);
+        const dados = await resposta.json();
+
+        if (!dados.ok || dados.solicitacoes.length === 0) {
+            corpo.innerHTML = `<tr><td colspan="4" class="py-6 px-4 text-center text-gray-400">Ainda sem resultados concluídos.</td></tr>`;
+            return;
+        }
+
+        corpo.innerHTML = dados.solicitacoes.map((s) => `
+            <tr class="hover:bg-gray-50/50 transition">
+                <td class="py-4 px-4 font-medium">${s.paciente}</td>
+                <td class="py-4 px-4 text-gray-500">${s.total_itens}</td>
+                <td class="py-4 px-4 text-gray-500 whitespace-nowrap">${meusAtendimentosFormatarDataHora(s.concluido_em)}</td>
+                <td class="py-4 px-4 text-right">
+                    <button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="abrirDetalheResultado(${s.id})">Ver</button>
+                </td>
+            </tr>
+        `).join("");
+    } catch (erro) {
+        corpo.innerHTML = `<tr><td colspan="4" class="py-6 px-4 text-center text-gray-400">Erro ao carregar resultados.</td></tr>`;
+    }
+}
+
+async function abrirDetalheResultado(id) {
+    document.getElementById("modal-detalhe-resultado").classList.remove("hidden");
+    const container = document.getElementById("resultado-itens-container");
+    container.innerHTML = `<p class="text-center text-gray-400 py-6">A carregar...</p>`;
+
+    try {
+        const resposta = await fetch(MEUS_ATENDIMENTOS_URLS.resultadoDetalhe(id));
+        const dados = await resposta.json();
+
+        if (!dados.ok) {
+            container.innerHTML = `<p class="text-center text-gray-400 py-6">Erro ao carregar o resultado.</p>`;
+            return;
+        }
+
+        const s = dados.solicitacao;
+        document.getElementById("resultado-paciente-nome").textContent = s.paciente;
+
+        container.innerHTML = s.itens.map((item) => `
+            <div class="border border-gray-200 rounded-xl p-4">
+                <p class="font-semibold text-gray-800">${item.tipo_exame}</p>
+                <p class="text-xs text-gray-400 mb-2">${item.categoria}${item.valor_referencia ? " — Ref.: " + item.valor_referencia : ""}${item.unidade_medida ? " " + item.unidade_medida : ""}</p>
+                <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">${item.resultado || "—"}</p>
+                <p class="text-xs text-gray-400 mt-2">Resultado registado em ${meusAtendimentosFormatarDataHora(item.data_resultado)}</p>
+            </div>
+        `).join("");
+    } catch (erro) {
+        container.innerHTML = `<p class="text-center text-gray-400 py-6">Erro ao carregar o resultado.</p>`;
+    }
+}
+
+function closeDetalheResultadoModal() {
+    document.getElementById("modal-detalhe-resultado").classList.add("hidden");
 }
