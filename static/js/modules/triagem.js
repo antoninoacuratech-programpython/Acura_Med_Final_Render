@@ -36,8 +36,9 @@ async function carregarFilaTriagem() {
                     : `<span class="bg-amber-50 text-amber-600 text-xs font-medium px-3 py-1 rounded-full">Pendente</span>`;
 
                 return `
-                    <tr class="hover:bg-gray-50/50 transition" data-search="${a.paciente.toLowerCase()} ${a.paciente_codigo.toLowerCase()}">
+                    <tr class="hover:bg-gray-50/50 transition" data-search="${a.paciente.toLowerCase()} ${a.paciente_codigo.toLowerCase()} ${(a.bi || "").toLowerCase()}">
                         <td class="py-4 px-4 font-medium">${a.paciente}</td>
+                        <td class="py-4 px-4 text-gray-500">${a.bi || "—"}</td>
                         <td class="py-4 px-4 text-gray-500">${a.prioridade || "—"}</td>
                         <td class="py-4 px-4">${badge}</td>
                         <td class="py-4 px-4 text-right">
@@ -47,9 +48,9 @@ async function carregarFilaTriagem() {
                         </td>
                     </tr>`;
             }).join("")
-            : `<tr><td class="py-6 px-4 text-center text-gray-400" colspan="4">Ninguém à espera de triagem.</td></tr>`;
+            : `<tr><td class="py-6 px-4 text-center text-gray-400" colspan="5">Ninguém à espera de triagem.</td></tr>`;
     } catch (e) {
-        corpo.innerHTML = `<tr><td class="py-6 px-4 text-center text-gray-400" colspan="4">Erro ao carregar a fila.</td></tr>`;
+        corpo.innerHTML = `<tr><td class="py-6 px-4 text-center text-gray-400" colspan="5">Erro ao carregar a fila.</td></tr>`;
     }
 }
 
@@ -65,6 +66,9 @@ async function openSinaisVitaisModal(atendimentoId, nomePaciente) {
     document.getElementById("form-sinais-vitais").reset();
     document.getElementById("sv-atendimento-id").value = atendimentoId;
     document.getElementById("modalErroSinaisVitais").classList.add("hidden");
+    document.getElementById("sv-info-nome").textContent = nomePaciente;
+    document.getElementById("sv-info-bi").textContent = "—";
+    document.getElementById("sv-info-idade").textContent = "—";
     document.getElementById("modal-sinais-vitais").classList.remove("hidden");
 
     try {
@@ -73,6 +77,10 @@ async function openSinaisVitaisModal(atendimentoId, nomePaciente) {
         });
         const dados = await resposta.json();
         if (!dados.ok) return;
+
+        document.getElementById("sv-info-nome").textContent = dados.paciente.nome;
+        document.getElementById("sv-info-bi").textContent = dados.paciente.bi || "—";
+        document.getElementById("sv-info-idade").textContent = `${dados.paciente.idade} anos`;
 
         const sv = dados.sinais_vitais;
         const form = document.getElementById("form-sinais-vitais");

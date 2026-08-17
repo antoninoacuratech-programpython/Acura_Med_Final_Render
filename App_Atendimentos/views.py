@@ -385,6 +385,10 @@ def listar_meus_atendimentos(request):
 @login_required
 @requer_permissao("atendimento.atender")
 def ficha_atendimento(request, id):
+    """
+    Página completa da consulta (não é modal) — carregada no workspace
+    da SPA quando o médico clica "Atender".
+    """
     try:
         atendimento = Atendimento.objects.select_related("paciente").get(
             id=id, hospital=request.user.hospital, profissional=request.user
@@ -440,20 +444,20 @@ def listar_fila_triagem(request):
         criado_em__date=hoje,
     ).select_related("paciente", "consulta").order_by("criado_em")
 
-    return JsonResponse({
-        "ok": True,
-        "atendimentos": [
-            {
-                "id": a.id,
-                "paciente": a.paciente.nome_completo,
-                "paciente_codigo": a.paciente.codigo,
-                "prioridade": a.prioridade,
-                "sinais_preenchidos": hasattr(a, "consulta") and bool(a.consulta.pressao_arterial),
-                "criado_em": a.criado_em.isoformat(),
-            }
-            for a in atendimentos
-        ]
-    })
+    resultado = []
+    for a in atendimentos:
+        documento_bi = a.paciente.documentos.filter(tipo=DocumentoPaciente.TipoDocumento.BI).first()
+        resultado.append({
+            "id": a.id,
+            "paciente": a.paciente.nome_completo,
+            "paciente_codigo": a.paciente.codigo,
+            "bi": documento_bi.numero if documento_bi else "",
+            "prioridade": a.prioridade,
+            "sinais_preenchidos": hasattr(a, "consulta") and bool(a.consulta.pressao_arterial),
+            "criado_em": a.criado_em.isoformat(),
+        })
+
+    return JsonResponse({"ok": True, "atendimentos": resultado})
 
 
 @login_required
