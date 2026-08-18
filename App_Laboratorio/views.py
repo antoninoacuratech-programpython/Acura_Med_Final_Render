@@ -17,9 +17,11 @@ def _contexto_painel_laboratorio(request):
 
     return {
         "exames": exames,
-        "total_categorias": exames.values("categoria").distinct().count(),
-        "exame_categorias": TipoExame.Categoria.choices,
+        "total_departamentos": exames.values("departamento").distinct().count(),
+        "exame_departamentos": TipoExame.Departamento.choices,
+        "exame_metodos": TipoExame.Metodo.choices,
         "exame_tipos_amostra": TipoExame.TipoAmostra.choices,
+        "exame_tipos_resultado": TipoExame.TipoResultado.choices,
     }
 
 
@@ -36,12 +38,17 @@ def cadastrar_tipo_exame(request):
         return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
 
     codigo = request.POST.get("exame_codigo", "").strip()
+    codigo_padronizado = request.POST.get("exame_codigo_padronizado", "").strip()
+    departamento = request.POST.get("exame_departamento", "").strip().upper()
     nome = request.POST.get("exame_nome", "").strip()
-    categoria = request.POST.get("exame_categoria", "").strip().upper()
+    nome_tecnico = request.POST.get("exame_nome_tecnico", "").strip()
+    metodo = request.POST.get("exame_metodo", "").strip().upper()
     tipo_amostra = request.POST.get("exame_tipo_amostra", "").strip().upper()
+    tipo_resultado = request.POST.get("exame_tipo_resultado", "").strip().upper()
     valor_referencia = request.POST.get("exame_valor_referencia", "").strip()
     unidade_medida = request.POST.get("exame_unidade_medida", "").strip()
-    tempo_estimado_str = request.POST.get("exame_tempo_estimado", "").strip()
+    tempo_estimado = request.POST.get("exame_tempo_estimado", "").strip()
+    instrucoes_preparacao = request.POST.get("exame_instrucoes_preparacao", "").strip()
 
     erros = []
     if not codigo:
@@ -50,17 +57,14 @@ def cadastrar_tipo_exame(request):
         erros.append("Já existe um exame com este código.")
     if not nome:
         erros.append("Nome é obrigatório.")
-    if categoria not in TipoExame.Categoria.values:
-        erros.append("Categoria inválida.")
+    if departamento not in TipoExame.Departamento.values:
+        erros.append("Departamento inválido.")
     if tipo_amostra not in TipoExame.TipoAmostra.values:
         erros.append("Tipo de amostra inválido.")
-
-    tempo_estimado_horas = None
-    if tempo_estimado_str:
-        try:
-            tempo_estimado_horas = int(tempo_estimado_str)
-        except ValueError:
-            erros.append("Tempo estimado inválido.")
+    if tipo_resultado not in TipoExame.TipoResultado.values:
+        erros.append("Tipo de resultado inválido.")
+    if metodo and metodo not in TipoExame.Metodo.values:
+        erros.append("Método inválido.")
 
     if erros:
         return JsonResponse({"ok": False, "erro": " ".join(erros)}, status=400)
@@ -68,12 +72,17 @@ def cadastrar_tipo_exame(request):
     try:
         exame = TipoExame.objects.create(
             codigo=codigo,
+            codigo_padronizado=codigo_padronizado,
+            departamento=departamento,
             nome=nome,
-            categoria=categoria,
+            nome_tecnico=nome_tecnico,
+            metodo=metodo,
             tipo_amostra=tipo_amostra,
+            tipo_resultado=tipo_resultado,
             valor_referencia=valor_referencia,
             unidade_medida=unidade_medida,
-            tempo_estimado_horas=tempo_estimado_horas,
+            tempo_estimado=tempo_estimado,
+            instrucoes_preparacao=instrucoes_preparacao,
         )
     except Exception as e:
         return JsonResponse({"ok": False, "erro": f"Erro ao salvar: {e}"}, status=400)
@@ -101,12 +110,17 @@ def detalhe_tipo_exame(request, id):
         "exame": {
             "id": exame.id,
             "codigo": exame.codigo,
+            "codigo_padronizado": exame.codigo_padronizado,
+            "departamento": exame.departamento,
             "nome": exame.nome,
-            "categoria": exame.categoria,
+            "nome_tecnico": exame.nome_tecnico,
+            "metodo": exame.metodo,
             "tipo_amostra": exame.tipo_amostra,
+            "tipo_resultado": exame.tipo_resultado,
             "valor_referencia": exame.valor_referencia,
             "unidade_medida": exame.unidade_medida,
-            "tempo_estimado_horas": exame.tempo_estimado_horas,
+            "tempo_estimado": exame.tempo_estimado,
+            "instrucoes_preparacao": exame.instrucoes_preparacao,
             "ativo": exame.ativo,
         }
     })
@@ -124,12 +138,17 @@ def atualizar_tipo_exame(request, id):
         return JsonResponse({"ok": False, "erro": "Exame não encontrado."}, status=404)
 
     codigo = request.POST.get("exame_codigo", "").strip()
+    codigo_padronizado = request.POST.get("exame_codigo_padronizado", "").strip()
+    departamento = request.POST.get("exame_departamento", "").strip().upper()
     nome = request.POST.get("exame_nome", "").strip()
-    categoria = request.POST.get("exame_categoria", "").strip().upper()
+    nome_tecnico = request.POST.get("exame_nome_tecnico", "").strip()
+    metodo = request.POST.get("exame_metodo", "").strip().upper()
     tipo_amostra = request.POST.get("exame_tipo_amostra", "").strip().upper()
+    tipo_resultado = request.POST.get("exame_tipo_resultado", "").strip().upper()
     valor_referencia = request.POST.get("exame_valor_referencia", "").strip()
     unidade_medida = request.POST.get("exame_unidade_medida", "").strip()
-    tempo_estimado_str = request.POST.get("exame_tempo_estimado", "").strip()
+    tempo_estimado = request.POST.get("exame_tempo_estimado", "").strip()
+    instrucoes_preparacao = request.POST.get("exame_instrucoes_preparacao", "").strip()
     ativo = request.POST.get("exame_ativo") == "on"
 
     erros = []
@@ -139,29 +158,31 @@ def atualizar_tipo_exame(request, id):
         erros.append("Já existe outro exame com este código.")
     if not nome:
         erros.append("Nome é obrigatório.")
-    if categoria not in TipoExame.Categoria.values:
-        erros.append("Categoria inválida.")
+    if departamento not in TipoExame.Departamento.values:
+        erros.append("Departamento inválido.")
     if tipo_amostra not in TipoExame.TipoAmostra.values:
         erros.append("Tipo de amostra inválido.")
-
-    tempo_estimado_horas = exame.tempo_estimado_horas
-    if tempo_estimado_str:
-        try:
-            tempo_estimado_horas = int(tempo_estimado_str)
-        except ValueError:
-            erros.append("Tempo estimado inválido.")
+    if tipo_resultado not in TipoExame.TipoResultado.values:
+        erros.append("Tipo de resultado inválido.")
+    if metodo and metodo not in TipoExame.Metodo.values:
+        erros.append("Método inválido.")
 
     if erros:
         return JsonResponse({"ok": False, "erro": " ".join(erros)}, status=400)
 
     try:
         exame.codigo = codigo
+        exame.codigo_padronizado = codigo_padronizado
+        exame.departamento = departamento
         exame.nome = nome
-        exame.categoria = categoria
+        exame.nome_tecnico = nome_tecnico
+        exame.metodo = metodo
         exame.tipo_amostra = tipo_amostra
+        exame.tipo_resultado = tipo_resultado
         exame.valor_referencia = valor_referencia
         exame.unidade_medida = unidade_medida
-        exame.tempo_estimado_horas = tempo_estimado_horas
+        exame.tempo_estimado = tempo_estimado
+        exame.instrucoes_preparacao = instrucoes_preparacao
         exame.ativo = ativo
         exame.save()
     except Exception as e:
@@ -349,7 +370,7 @@ def detalhe_solicitacao_laboratorio(request, id):
                 {
                     "id": item.id,
                     "tipo_exame": item.tipo_exame.nome,
-                    "categoria": item.tipo_exame.get_categoria_display(),
+                    "departamento": item.tipo_exame.get_departamento_display(),
                     "tipo_amostra": item.tipo_exame.get_tipo_amostra_display(),
                     "valor_referencia": item.tipo_exame.valor_referencia,
                     "unidade_medida": item.tipo_exame.unidade_medida,
@@ -518,7 +539,7 @@ def detalhe_resultado_exame(request, id):
             "itens": [
                 {
                     "tipo_exame": item.tipo_exame.nome,
-                    "categoria": item.tipo_exame.get_categoria_display(),
+                    "departamento": item.tipo_exame.get_departamento_display(),
                     "valor_referencia": item.tipo_exame.valor_referencia,
                     "unidade_medida": item.tipo_exame.unidade_medida,
                     "resultado": item.resultado,

@@ -252,7 +252,7 @@ Paciente terá alta ao finalizar este atendimento.
 <select class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="item_tipo_exame_id[]" required>
 <option value="">Seleccione...</option>
 {% for e in exames %}
-<option value="{{ e.id }}">{{ e.nome }} — {{ e.get_categoria_display }}</option>
+<option value="{{ e.id }}">{{ e.nome }} — {{ e.get_departamento_display }}</option>
 {% endfor %}
 </select>
 </div>

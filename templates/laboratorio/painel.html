@@ -14,8 +14,8 @@
 </div>
 <div class="bg-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
 <div>
-<p class="text-xs text-gray-500 font-medium mb-1">Categorias</p>
-<h3 class="text-2xl font-bold text-gray-800">{{ total_categorias }}</h3>
+<p class="text-xs text-gray-500 font-medium mb-1">Departamentos</p>
+<h3 class="text-2xl font-bold text-gray-800">{{ total_departamentos }}</h3>
 </div>
 <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-500 flex items-center justify-center text-lg shadow-inner">
 <i class="fa-solid fa-layer-group"></i>
@@ -49,7 +49,7 @@
 <thead>
 <tr class="border-b border-gray-100">
 <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nome</th>
-<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Categoria</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Departamento</th>
 <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amostra</th>
 <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tempo Estimado</th>
 <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Estado</th>
@@ -60,7 +60,7 @@
 {% for e in exames %}
 <tr class="hover:bg-gray-50/50 transition" data-id="{{ e.id }}" data-nome="{{ e.nome|lower }}" data-codigo="{{ e.codigo|lower }}">
 <td class="py-4 px-4 font-medium">{{ e.nome }} <span class="text-gray-400 font-normal">({{ e.codigo }})</span></td>
-<td class="py-4 px-4 text-gray-500">{{ e.get_categoria_display }}</td>
+<td class="py-4 px-4 text-gray-500">{{ e.get_departamento_display }}</td>
 <td class="py-4 px-4 text-gray-500">{{ e.get_tipo_amostra_display }}</td>
 <td class="py-4 px-4 text-gray-500">{% if e.tempo_estimado_horas %}{{ e.tempo_estimado_horas }}h{% else %}—{% endif %}</td>
 <td class="py-4 px-4">

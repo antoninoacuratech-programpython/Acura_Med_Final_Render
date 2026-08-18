@@ -80,12 +80,17 @@ function openExameModal(id) {
                 }
                 const e = dados.exame;
                 document.getElementById("exame-codigo").value = e.codigo;
+                document.getElementById("exame-codigo-padronizado").value = e.codigo_padronizado;
+                document.getElementById("exame-departamento").value = e.departamento;
                 document.getElementById("exame-nome").value = e.nome;
-                document.getElementById("exame-categoria").value = e.categoria;
+                document.getElementById("exame-nome-tecnico").value = e.nome_tecnico;
+                document.getElementById("exame-metodo").value = e.metodo;
                 document.getElementById("exame-tipo-amostra").value = e.tipo_amostra;
+                document.getElementById("exame-tipo-resultado").value = e.tipo_resultado;
                 document.getElementById("exame-valor-referencia").value = e.valor_referencia;
                 document.getElementById("exame-unidade-medida").value = e.unidade_medida;
-                document.getElementById("exame-tempo-estimado").value = e.tempo_estimado_horas ?? "";
+                document.getElementById("exame-tempo-estimado").value = e.tempo_estimado;
+                document.getElementById("exame-instrucoes-preparacao").value = e.instrucoes_preparacao;
                 document.getElementById("exame-ativo").checked = e.ativo;
             })
             .catch(() => window.showToast("Erro ao carregar dados do exame.", "erro"));
