@@ -9,6 +9,8 @@ const MEUS_ATENDIMENTOS_URLS = {
     cadastrarSolicitacaoExame: "/modulos/laboratorio/solicitacoes/cadastrar/",
     resultados: "/modulos/laboratorio/resultados/",
     resultadoDetalhe: (id) => `/modulos/laboratorio/resultados/${id}/`,
+    quartosDisponiveis: "/modulos/internamento/quartos/disponiveis/",
+    cadastrarInternamento: "/modulos/internamento/cadastrar/",
 };
 
 // O mesmo script serve tanto a fila (lista) como a ficha (formulário) —
@@ -113,7 +115,7 @@ async function atenderPaciente(atendimentoId) {
 function initFichaAtendimento() {
     // Mostra o painel da conduta já seleccionada (caso seja um rascunho
     // reaberto) e garante pelo menos uma linha pronta (medicamento ou
-    // exame, consoante a conduta).
+    // exame, consoante a conduta), ou carrega os quartos se for Internar.
     const marcado = document.querySelector('input[name="conduta"]:checked');
     if (marcado) {
         mudarConduta(marcado.value);
@@ -131,6 +133,35 @@ function mudarConduta(valor) {
 
     if (valor === "SOLICITAR_EXAME" && !document.getElementById("itens-exame-ficha").children.length) {
         adicionarLinhaExameFicha();
+    }
+
+    if (valor === "INTERNAR") {
+        carregarQuartosDisponiveis();
+    }
+}
+
+async function carregarQuartosDisponiveis() {
+    const select = document.getElementById("internamento-quarto-id");
+    const valorAnterior = select.value;
+
+    try {
+        const resposta = await fetch(MEUS_ATENDIMENTOS_URLS.quartosDisponiveis, {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const dados = await resposta.json();
+
+        if (!dados.ok || dados.quartos.length === 0) {
+            select.innerHTML = `<option value="">Nenhum quarto com vaga disponível</option>`;
+            return;
+        }
+
+        select.innerHTML = `<option value="">Seleccione...</option>` + dados.quartos.map((q) =>
+            `<option value="${q.id}">${q.nave} — Quarto ${q.numero} (${q.tipo}) — ${q.vagas_disponiveis} vaga(s)</option>`
+        ).join("");
+
+        if (valorAnterior) select.value = valorAnterior;
+    } catch (e) {
+        select.innerHTML = `<option value="">Erro ao carregar quartos</option>`;
     }
 }
 
@@ -232,6 +263,43 @@ async function guardarFicha(finalizar) {
             }
         } catch (e) {
             erroEl.textContent = "Falha de conexão ao enviar a solicitação de exame.";
+            erroEl.classList.remove("hidden");
+            return;
+        }
+    }
+
+    // Mesma lógica para Internar: envia o internamento primeiro (com
+    // verificação de vaga no backend), só finaliza a consulta se tiver
+    // sucesso.
+    if (finalizar && condutaSelecionada === "INTERNAR") {
+        const quartoId = document.getElementById("internamento-quarto-id").value;
+        if (!quartoId) {
+            erroEl.textContent = "Seleccione um quarto antes de finalizar.";
+            erroEl.classList.remove("hidden");
+            return;
+        }
+
+        const dadosInternamento = new FormData();
+        dadosInternamento.append("internamento_atendimento_id", atendimentoId);
+        dadosInternamento.append("internamento_quarto_id", quartoId);
+        dadosInternamento.append("internamento_motivo", document.getElementById("internamento-motivo").value);
+        dadosInternamento.append("internamento_observacoes", form.observacoes_condutas.value);
+
+        try {
+            const respostaInternamento = await fetch(MEUS_ATENDIMENTOS_URLS.cadastrarInternamento, {
+                method: "POST",
+                headers: { "X-CSRFToken": meusAtendimentosCsrfToken() },
+                body: dadosInternamento,
+            });
+            const resultadoInternamento = await respostaInternamento.json();
+
+            if (!respostaInternamento.ok || !resultadoInternamento.ok) {
+                erroEl.textContent = resultadoInternamento.erro || "Erro ao registar o internamento.";
+                erroEl.classList.remove("hidden");
+                return;
+            }
+        } catch (e) {
+            erroEl.textContent = "Falha de conexão ao registar o internamento.";
             erroEl.classList.remove("hidden");
             return;
         }

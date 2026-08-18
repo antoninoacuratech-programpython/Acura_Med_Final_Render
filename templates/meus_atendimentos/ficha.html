@@ -134,10 +134,21 @@
 </button>
 </div>
 
-<!-- Painel: Internar (placeholder) -->
-<div class="hidden bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center text-sm text-gray-500 mb-4" id="painel-conduta-INTERNAR">
-<i class="fa-solid fa-circle-info mr-1"></i>
-Internamento será ligado ao módulo de Internamento — ainda não disponível.
+<!-- Painel: Internar (estruturado, liga ao Internamento) -->
+<div class="hidden border border-gray-200 rounded-xl p-4 mb-4" id="painel-conduta-INTERNAR">
+<h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Dados do Internamento</h4>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div class="space-y-1">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Quarto</label>
+<select class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="internamento-quarto-id" name="internamento_quarto_id">
+<option value="">A carregar quartos disponíveis...</option>
+</select>
+</div>
+</div>
+<div class="space-y-1">
+<label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Motivo do Internamento</label>
+<textarea class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="internamento-motivo" name="internamento_motivo" placeholder="Descrever o motivo do internamento..." rows="3"></textarea>
+</div>
 </div>
 
 <!-- Painel: Alta (sem campos extra) -->

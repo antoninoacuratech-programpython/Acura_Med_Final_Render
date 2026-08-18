@@ -465,6 +465,29 @@ urlpatterns = [
         internamento_views.eliminar_quarto,
         name="eliminar_quarto"
     ),
+    path(
+        "modulos/internamento/quartos/disponiveis/",
+        internamento_views.listar_quartos_disponiveis,
+        name="listar_quartos_disponiveis"
+    ),
+
+    path(
+        "modulos/internamento/cadastrar/",
+        internamento_views.cadastrar_internamento,
+        name="cadastrar_internamento"
+    ),
+
+    path(
+        "modulos/internamento/internados/",
+        internamento_views.listar_internados,
+        name="listar_internados"
+    ),
+
+    path(
+        "modulos/internamento/<int:id>/alta/",
+        internamento_views.dar_alta,
+        name="dar_alta"
+    ),
 
 
 # 2) Sidebar:
