@@ -1,234 +1,360 @@
 {% load static %}
 <section class="panel" id="dashboardPanel">
 
-    <style>
-        /* Estilo do gráfico — a única parte que o global.css ainda não cobre.
-           Cores reaproveitadas das mesmas usadas em .stat-icon (blue/pink/green). */
-        #dashboardPanel .chart-container {
-            overflow-x: auto;
-        }
+<style>
+    #dashboardPanel { font-family: inherit; }
+    #dashboardPanel .db-hero {
+        background: linear-gradient(135deg, #2D3250 0%, #3d4470 100%);
+        border-radius: 24px;
+        padding: 28px 32px;
+        color: #fff;
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    #dashboardPanel .db-hero h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    #dashboardPanel .db-hero p { color: #c4c8e0; margin: 4px 0 0; font-size: .875rem; }
+    #dashboardPanel .db-section-title {
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #6b7280;
+        margin: 0 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    #dashboardPanel .db-section-title i { color: #F36A2D; }
+    #dashboardPanel .db-section { margin-bottom: 34px; }
+    #dashboardPanel .db-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+    #dashboardPanel .db-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 20px 22px;
+        box-shadow: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+        border-left: 4px solid var(--db-accent, #F36A2D);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    #dashboardPanel .db-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16,24,40,.08);
+    }
+    #dashboardPanel .db-card-label { font-size: .74rem; color: #8a90a3; font-weight: 600; margin: 0 0 6px; }
+    #dashboardPanel .db-card-value { font-size: 1.9rem; font-weight: 800; color: #1f2340; margin: 0; line-height: 1; }
+    #dashboardPanel .db-card-icon {
+        width: 48px; height: 48px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; color: var(--db-accent, #F36A2D);
+        background: color-mix(in srgb, var(--db-accent, #F36A2D) 12%, white);
+        flex-shrink: 0;
+    }
+    #dashboardPanel .db-panels {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 18px;
+    }
+    @media (max-width: 900px) { #dashboardPanel .db-panels { grid-template-columns: 1fr; } }
+    #dashboardPanel .db-chart-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 22px;
+        box-shadow: 0 1px 3px rgba(16,24,40,.06);
+    }
+    #dashboardPanel .db-chart-card h4 { font-size: .9rem; font-weight: 700; color: #1f2340; margin: 0 0 4px; }
+    #dashboardPanel .db-chart-card p.sub { font-size: .76rem; color: #9aa1b1; margin: 0 0 16px; }
+    #dashboardPanel .db-empty {
+        background: #fff; border-radius: 20px; padding: 60px 20px;
+        text-align: center; color: #9aa1b1; font-size: .9rem;
+    }
+    #dashboardPanel .db-chart-wrap { position: relative; height: 220px; }
+    #dashboardPanel .db-donut-wrap { position: relative; height: 200px; display: flex; align-items: center; justify-content: center; }
+    #dashboardPanel .db-donut-center { position: absolute; text-align: center; pointer-events: none; }
+    #dashboardPanel .db-donut-center .n { font-size: 1.6rem; font-weight: 800; color: #1f2340; display: block; }
+    #dashboardPanel .db-donut-center .l { font-size: .68rem; color: #9aa1b1; text-transform: uppercase; letter-spacing: .05em; }
+</style>
 
-        #dashboardPanel .custom-chart {
-            display: flex;
-            gap: 16px;
-            min-width: 480px;
-        }
-
-        #dashboardPanel .chart-y-axis {
-            display: flex;
-            flex-direction: column-reverse;
-            justify-content: space-between;
-            font-size: .72rem;
-            color: #9aa1b1;
-            padding-bottom: 28px;
-            flex-shrink: 0;
-        }
-
-        #dashboardPanel .chart-bars-wrapper {
-            flex: 1;
-            display: flex;
-            align-items: flex-end;
-            gap: 18px;
-            border-left: 1px solid #eef0f4;
-            border-bottom: 1px solid #eef0f4;
-            padding: 0 8px;
-            min-height: 220px;
-        }
-
-        #dashboardPanel .bar-group {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-
-        #dashboardPanel .bar-value {
-            font-size: .72rem;
-            font-weight: 600;
-            color: var(--primary-dark);
-        }
-
-        #dashboardPanel .bar-fill {
-            width: 60%;
-            max-width: 34px;
-            border-radius: 8px 8px 0 0;
-            transition: height .4s ease;
-        }
-
-        #dashboardPanel .bar-fill.blue { background: #3685d8; }
-        #dashboardPanel .bar-fill.pink { background: #e85d8d; }
-        #dashboardPanel .bar-fill.green { background: var(--green); }
-
-        #dashboardPanel .bar-label {
-            font-size: .72rem;
-            color: #7b8294;
-        }
-    </style>
-
-    <!-- Botão de Impressão de Relatório, novo atendimento, novo paciente -->
-    <div class="dashboard-quick-actions">
-        <div class="report-dropdown-wrapper">
-            <button class="btn-report" id="reportDropdownBtn" type="button">
-                <i class="fa-solid fa-print"></i> Impressão de Relatório <i class="fa-solid fa-chevron-down"></i>
-            </button>
-            <div class="report-options-panel" id="reportOptionsPanel">
-                <a href="#"><i class="fa-solid fa-calendar-day day"></i> Relatório do Dia</a>
-                <a href="#"><i class="fa-solid fa-calendar-week week"></i> Relatório Semanal</a>
-                <a href="#"><i class="fa-solid fa-calendar-days month"></i> Relatório Mensal</a>
-            </div>
-        </div>
-
-        <button class="dashboard-quick-action" id="btnNovoAtendimento" type="button">
-            <i class="fa-solid fa-user-clock"></i>
-            Novo Atendimento
-        </button>
-
-        <button class="dashboard-quick-action" id="btnNovoPaciente" type="button">
-            <i class="fa-solid fa-user-plus"></i>
-            Novo Paciente
-        </button>
+<div class="db-hero">
+    <div>
+        <h1>Olá, {{ request.user.primeiro_nome }} 👋</h1>
+        <p>{{ hoje|date:"l, d \d\e F \d\e Y"|capfirst }}</p>
     </div>
+</div>
 
-    <!-- Cartões de estatística (dados demo — ainda não ligados ao backend) -->
-    <div class="cards-grid">
-        <div class="stat-card">
-            <div class="stat-icon green"><i class="fa-solid fa-clipboard-check"></i></div>
-            <div class="stat-info">
-                <span>Total concluídos</span>
-                <h3>150</h3>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon pink"><i class="fa-solid fa-calendar-days"></i></div>
-            <div class="stat-info">
-                <span>Agendado</span>
-                <h3>50</h3>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon blue"><i class="fa-solid fa-spinner"></i></div>
-            <div class="stat-info">
-                <span>Decorrendo</span>
-                <h3>12</h3>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon blue-dark"><i class="fa-solid fa-clock-rotate-left"></i></div>
-            <div class="stat-info">
-                <span>Remarcados</span>
-                <h3>10</h3>
-            </div>
-        </div>
-    </div>
+{% if not recepcao and not medico and not enfermeiro and not farmacia and not laboratorio and not internamento %}
+<div class="db-empty">
+    <i class="fa-regular fa-chart-bar" style="font-size:2rem;margin-bottom:10px;display:block;color:#d1d5db;"></i>
+    O seu perfil ainda não tem nenhum indicador configurado para o Dashboard.
+</div>
+{% endif %}
 
-    <!-- Tabela de Atividades (dados demo) -->
-    <div class="content-card">
-        <div class="card-header-table">
-            <h3>Tabela de atividades</h3>
-            <div class="table-search">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input id="dashboardTabelaPesquisa" placeholder="Pesquisa na tabela" type="text">
-            </div>
+<!-- RECEPÇÃO -->
+{% if recepcao %}
+<div class="db-section">
+    <p class="db-section-title"><i class="fa-solid fa-user-clock"></i>Recepção</p>
+    <div class="db-grid">
+        <div class="db-card" style="--db-accent:#3685d8;">
+            <div><p class="db-card-label">Atendimentos Hoje</p><h3 class="db-card-value">{{ recepcao.total_hoje }}</h3></div>
+            <div class="db-card-icon"><i class="fa-solid fa-user-clock"></i></div>
         </div>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>N/Atendimento</th>
-                        <th>Paciente</th>
-                        <th>Tipo</th>
-                        <th>Dr/Med/Enf</th>
-                        <th>Data/Hora</th>
-                        <th>Duração</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody id="dashboardTabelaAtividades">
-                    <tr class="linha-atividade" data-busca="1254 francisco fisioterapia dr. luis">
-                        <td>1254</td>
-                        <td>Francisco</td>
-                        <td>Fisioterapia</td>
-                        <td>Dr. Luis</td>
-                        <td>28 Jan, 12.30 AM</td>
-                        <td>30min 45 seg</td>
-                        <td><span class="badge green">Concluido</span></td>
-                    </tr>
-                    <tr class="linha-atividade" data-busca="6566 mizombo consulta dr. carlos">
-                        <td>6566</td>
-                        <td>Mizombo</td>
-                        <td>Consulta</td>
-                        <td>Dr. Carlos</td>
-                        <td>28 Jan, 13.00 AM</td>
-                        <td>......</td>
-                        <td><span class="badge orange">Decorrendo</span></td>
-                    </tr>
-                    <tr class="linha-atividade" data-busca="908 mauricio fisioterapia dr. luis">
-                        <td>908</td>
-                        <td>Mauricio</td>
-                        <td>Fisioterapia</td>
-                        <td>Dr. Luis</td>
-                        <td>28 Jan, 14.30 AM</td>
-                        <td>......</td>
-                        <td><span class="badge dark">Marcado</span></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="db-card" style="--db-accent:#e85d8d;">
+            <div><p class="db-card-label">Aguardando</p><h3 class="db-card-value">{{ recepcao.aguardando }}</h3></div>
+            <div class="db-card-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+        </div>
+        <div class="db-card" style="--db-accent:#f59e0b;">
+            <div><p class="db-card-label">Em Atendimento</p><h3 class="db-card-value">{{ recepcao.em_atendimento }}</h3></div>
+            <div class="db-card-icon"><i class="fa-solid fa-spinner"></i></div>
+        </div>
+        <div class="db-card" style="--db-accent:#10D941;">
+            <div><p class="db-card-label">Concluídos</p><h3 class="db-card-value">{{ recepcao.concluidos }}</h3></div>
+            <div class="db-card-icon"><i class="fa-solid fa-clipboard-check"></i></div>
         </div>
     </div>
-
-    <!-- Gráfico de Atendimentos por Dia da Semana (dados demo) -->
-    <div class="content-card chart-card-wrapper">
-        <div class="card-header-table">
-            <h3>Gráfico de Atendimentos por Dia da Semana</h3>
+    <div class="db-panels">
+        <div class="db-chart-card">
+            <h4>Atendimentos — Últimos 7 Dias</h4>
+            <p class="sub">Volume diário registado no hospital</p>
+            <div class="db-chart-wrap"><canvas id="chartTendencia7Dias"></canvas></div>
         </div>
-        <div class="chart-container">
-            <div class="custom-chart">
-                <div class="chart-y-axis">
-                    <span>150</span>
-                    <span>112</span>
-                    <span>75</span>
-                    <span>37</span>
-                    <span>0</span>
-                </div>
-                <div class="chart-bars-wrapper">
-                    <div class="bar-group">
-                        <span class="bar-value">90</span>
-                        <div class="bar-fill blue" style="height: 120px;"></div>
-                        <span class="bar-label">Segunda</span>
-                    </div>
-                    <div class="bar-group">
-                        <span class="bar-value">110</span>
-                        <div class="bar-fill blue" style="height: 146px;"></div>
-                        <span class="bar-label">Terça</span>
-                    </div>
-                    <div class="bar-group">
-                        <span class="bar-value">130</span>
-                        <div class="bar-fill blue" style="height: 173px;"></div>
-                        <span class="bar-label">Quarta</span>
-                    </div>
-                    <div class="bar-group">
-                        <span class="bar-value">95</span>
-                        <div class="bar-fill blue" style="height: 126px;"></div>
-                        <span class="bar-label">Quinta</span>
-                    </div>
-                    <div class="bar-group">
-                        <span class="bar-value">150</span>
-                        <div class="bar-fill green" style="height: 200px;"></div>
-                        <span class="bar-label">Sexta</span>
-                    </div>
-                    <div class="bar-group">
-                        <span class="bar-value">60</span>
-                        <div class="bar-fill pink" style="height: 80px;"></div>
-                        <span class="bar-label">Sábado</span>
-                    </div>
-                    <div class="bar-group">
-                        <span class="bar-value">25</span>
-                        <div class="bar-fill pink" style="height: 33px;"></div>
-                        <span class="bar-label">Domingo</span>
-                    </div>
-                </div>
+        <div class="db-chart-card">
+            <h4>Estado da Fila Hoje</h4>
+            <p class="sub">Distribuição por estado</p>
+            <div class="db-donut-wrap">
+                <canvas id="chartRecepcaoDonut"></canvas>
+                <div class="db-donut-center"><span class="n">{{ recepcao.total_hoje }}</span><span class="l">Hoje</span></div>
             </div>
         </div>
     </div>
+</div>
+{{ recepcao.tendencia_7dias|json_script:"dados-tendencia-7dias" }}
+{% endif %}
+
+<!-- MÉDICO -->
+{% if medico %}
+<div class="db-section">
+    <p class="db-section-title"><i class="fa-solid fa-user-doctor"></i>Os Meus Atendimentos</p>
+    <div class="db-panels">
+        <div class="db-grid" style="grid-template-columns:1fr;grid-auto-rows:1fr;">
+            <div class="db-card" style="--db-accent:#3685d8;">
+                <div><p class="db-card-label">Meus Hoje</p><h3 class="db-card-value">{{ medico.meus_hoje }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-user-clock"></i></div>
+            </div>
+            <div class="db-card" style="--db-accent:#e85d8d;">
+                <div><p class="db-card-label">Aguardando</p><h3 class="db-card-value">{{ medico.aguardando }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            </div>
+            <div class="db-card" style="--db-accent:#10D941;">
+                <div><p class="db-card-label">Receitas Emitidas Hoje</p><h3 class="db-card-value">{{ medico.prescricoes_criadas }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-file-prescription"></i></div>
+            </div>
+        </div>
+        <div class="db-chart-card">
+            <h4>Os Meus Atendimentos Hoje</h4>
+            <p class="sub">Por estado</p>
+            <div class="db-donut-wrap">
+                <canvas id="chartMedicoDonut"></canvas>
+                <div class="db-donut-center"><span class="n">{{ medico.meus_hoje }}</span><span class="l">Total</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ENFERMEIRO -->
+{% if enfermeiro %}
+<div class="db-section">
+    <p class="db-section-title"><i class="fa-solid fa-heart-pulse"></i>Triagem</p>
+    <div class="db-grid">
+        <div class="db-card" style="--db-accent:#e85d8d;">
+            <div><p class="db-card-label">Por Triar</p><h3 class="db-card-value">{{ enfermeiro.por_triar }}</h3></div>
+            <div class="db-card-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- FARMÁCIA -->
+{% if farmacia %}
+<div class="db-section">
+    <p class="db-section-title"><i class="fa-solid fa-pills"></i>Farmácia</p>
+    <div class="db-panels">
+        <div class="db-grid" style="grid-template-columns:1fr;grid-auto-rows:1fr;">
+            <div class="db-card" style="--db-accent:#ef4444;">
+                <div><p class="db-card-label">Esgotados</p><h3 class="db-card-value">{{ farmacia.esgotados }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+            </div>
+            <div class="db-card" style="--db-accent:#f59e0b;">
+                <div><p class="db-card-label">Stock Crítico</p><h3 class="db-card-value">{{ farmacia.criticos }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            </div>
+            <div class="db-card" style="--db-accent:#8b5cf6;">
+                <div><p class="db-card-label">Lotes a Vencer (30d)</p><h3 class="db-card-value">{{ farmacia.lotes_a_vencer }}</h3></div>
+                <div class="db-card-icon"><i class="fa-regular fa-calendar-days"></i></div>
+            </div>
+            <div class="db-card" style="--db-accent:#10D941;">
+                <div><p class="db-card-label">Receitas Pendentes</p><h3 class="db-card-value">{{ farmacia.receitas_pendentes }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-file-prescription"></i></div>
+            </div>
+        </div>
+        <div class="db-chart-card">
+            <h4>Saúde do Stock</h4>
+            <p class="sub">{{ farmacia.total_ativos }} medicamentos activos</p>
+            <div class="db-donut-wrap">
+                <canvas id="chartFarmaciaDonut"></canvas>
+                <div class="db-donut-center"><span class="n">{{ farmacia.total_ativos }}</span><span class="l">Total</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- LABORATÓRIO -->
+{% if laboratorio %}
+<div class="db-section">
+    <p class="db-section-title"><i class="fa-solid fa-flask-vial"></i>Laboratório</p>
+    <div class="db-panels">
+        <div class="db-grid" style="grid-template-columns:1fr;grid-auto-rows:1fr;">
+            <div class="db-card" style="--db-accent:#f59e0b;">
+                <div><p class="db-card-label">Aguardando Colheita</p><h3 class="db-card-value">{{ laboratorio.aguardando }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-vial"></i></div>
+            </div>
+            <div class="db-card" style="--db-accent:#3685d8;">
+                <div><p class="db-card-label">Colhidas</p><h3 class="db-card-value">{{ laboratorio.coletado }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-vial-circle-check"></i></div>
+            </div>
+        </div>
+        <div class="db-chart-card">
+            <h4>Solicitações Pendentes</h4>
+            <p class="sub">Por fase</p>
+            <div class="db-donut-wrap">
+                <canvas id="chartLabDonut"></canvas>
+                <div class="db-donut-center"><span class="n">{{ laboratorio.pendentes }}</span><span class="l">Total</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- INTERNAMENTO -->
+{% if internamento %}
+<div class="db-section">
+    <p class="db-section-title"><i class="fa-solid fa-bed-pulse"></i>Internamento</p>
+    <div class="db-panels">
+        <div class="db-grid" style="grid-template-columns:1fr;grid-auto-rows:1fr;">
+            <div class="db-card" style="--db-accent:#3685d8;">
+                <div><p class="db-card-label">Internados</p><h3 class="db-card-value">{{ internamento.internados }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-bed-pulse"></i></div>
+            </div>
+            <div class="db-card" style="--db-accent:#10D941;">
+                <div><p class="db-card-label">Vagas Disponíveis</p><h3 class="db-card-value">{{ internamento.vagas_disponiveis }}</h3></div>
+                <div class="db-card-icon"><i class="fa-solid fa-bed"></i></div>
+            </div>
+        </div>
+        <div class="db-chart-card">
+            <h4>Ocupação</h4>
+            <p class="sub">Internados vs. vagas livres</p>
+            <div class="db-donut-wrap">
+                <canvas id="chartInternamentoDonut"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 </section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const CORES = { blue: "#3685d8", pink: "#e85d8d", amber: "#f59e0b", green: "#10D941", red: "#ef4444", purple: "#8b5cf6", gray: "#e5e7eb" };
+
+    Chart.defaults.font.family = "inherit";
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.boxWidth = 8;
+
+    function donut(id, labels, valores, cores) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el, {
+            type: "doughnut",
+            data: { labels: labels, datasets: [{ data: valores, backgroundColor: cores, borderWidth: 0 }] },
+            options: {
+                cutout: "72%",
+                plugins: { legend: { position: "bottom" } },
+                maintainAspectRatio: false,
+            },
+        });
+    }
+
+    {% if recepcao %}
+    const tendencia = JSON.parse(document.getElementById("dados-tendencia-7dias").textContent);
+    new Chart(document.getElementById("chartTendencia7Dias"), {
+        type: "bar",
+        data: {
+            labels: tendencia.map(d => d.dia),
+            datasets: [{
+                label: "Atendimentos",
+                data: tendencia.map(d => d.total),
+                backgroundColor: CORES.blue,
+                borderRadius: 8,
+                maxBarThickness: 36,
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+    });
+
+    donut("chartRecepcaoDonut",
+        ["Aguardando", "Em Atendimento", "Concluídos"],
+        [{{ recepcao.aguardando }}, {{ recepcao.em_atendimento }}, {{ recepcao.concluidos }}],
+        [CORES.pink, CORES.amber, CORES.green]
+    );
+    {% endif %}
+
+    {% if medico %}
+    donut("chartMedicoDonut",
+        ["Aguardando", "Em Atendimento", "Concluídos"],
+        [{{ medico.aguardando }}, {{ medico.em_atendimento }}, {{ medico.concluidos }}],
+        [CORES.pink, CORES.amber, CORES.green]
+    );
+    {% endif %}
+
+    {% if farmacia %}
+    donut("chartFarmaciaDonut",
+        ["Ok", "Crítico", "Esgotado"],
+        [{{ farmacia.ok }}, {{ farmacia.criticos }}, {{ farmacia.esgotados }}],
+        [CORES.green, CORES.amber, CORES.red]
+    );
+    {% endif %}
+
+    {% if laboratorio %}
+    donut("chartLabDonut",
+        ["Aguardando Colheita", "Colhidas"],
+        [{{ laboratorio.aguardando }}, {{ laboratorio.coletado }}],
+        [CORES.amber, CORES.blue]
+    );
+    {% endif %}
+
+    {% if internamento %}
+    donut("chartInternamentoDonut",
+        ["Internados", "Vagas"],
+        [{{ internamento.internados }}, {{ internamento.vagas_disponiveis }}],
+        [CORES.blue, CORES.green]
+    );
+    {% endif %}
+})();
+</script>

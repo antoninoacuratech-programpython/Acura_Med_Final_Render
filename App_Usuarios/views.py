@@ -6,19 +6,32 @@ from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction, IntegrityError
-from django.db.models import Prefetch, Q
+from django.db.models import Prefetch, Q, Sum
 from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse
+from django.utils import timezone
+from datetime import timedelta
+
 from .ultilizador import Utilizador
 from .perfil import Perfil
 from .permissao import Permissao
 from .perfil_permissao import PerfilPermissao
-from .permissoes import requer_permissao
+from .permissoes import requer_permissao, tem_permissao
+
 from App_Hospital.hospital import Hospital
 from App_Hospital.departamento import Departamento
 from App_Hospital.especialidade import Especialidade
+
 from App_Pacientes.paciente import Paciente
 from App_Pacientes.documento import DocumentoPaciente
+
+from App_Atendimentos.atendimento import Atendimento
+from App_Prescricoes.prescricao_medicamento import PrescricaoMedicamento
+from App_Farmacia.lote import Lote
+from App_Farmacia.medicamento import Medicamento
+from App_Laboratorio.solicitacao_exame import SolicitacaoExame
+from App_Internamento.quarto import Quarto
+from App_Internamento.internamento import Internamento
 
 
 # LOGIN
@@ -28,21 +41,30 @@ def login_view(request):
         return redirect("dashboard")
 
     if request.method == "POST":
+
         email = request.POST.get("email")
         password = request.POST.get("password")
+
         try:
             utilizador = Utilizador.objects.get(email=email)
+
             if check_password(password, utilizador.password):
+
                 if not utilizador.is_active:
                     messages.error(
                         request,
                         "Este utilizador está desativado."
                     )
                     return redirect("login")
+
                 login(request, utilizador)
+
                 if utilizador.is_superuser:
+                    #return redirect("admin:index")
                     return redirect("dashboard")
+
                 return redirect("dashboard")
+
             else:
                 messages.error(
                     request,
@@ -54,6 +76,7 @@ def login_view(request):
                 request,
                 "Email ou senha inválidos."
             )
+
     return render(
         request,
         "index.html"
@@ -63,24 +86,32 @@ def login_view(request):
 # LOGOUT
 @login_required
 def logout_view(request):
+
     logout(request)
+
     messages.success(
         request,
         "Sessão encerrada com sucesso."
     )
+
     return redirect("login")
 
 def registro_view(request):
+
     if request.method == "POST":
+
         nome = request.POST.get("nome")
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
+
         if password != confirm_password:
+
             messages.error(
                 request,
                 "As senhas não coincidem."
             )
+
             return redirect("login")
 
 
@@ -129,10 +160,110 @@ def dashboard(request):
 @login_required
 def modulo_dashboard(request):
 
-    return render(
-        request,
-        "dashboard/painel.html"
-    )
+    hoje = timezone.localdate()
+    hospital = request.user.hospital
+    contexto = {"hoje": hoje}
+
+    if not hospital:
+        return render(request, "dashboard/painel.html", contexto)
+
+    # --- Recepção ---
+    if tem_permissao(request.user, "atendimento.gerir"):
+        atendimentos_hoje = Atendimento.objects.filter(hospital=hospital, criado_em__date=hoje)
+
+        tendencia_7dias = []
+        for i in range(6, -1, -1):
+            dia = hoje - timedelta(days=i)
+            total_dia = Atendimento.objects.filter(hospital=hospital, criado_em__date=dia).count()
+            tendencia_7dias.append({"dia": dia.strftime("%d/%m"), "total": total_dia})
+
+        contexto["recepcao"] = {
+            "total_hoje": atendimentos_hoje.count(),
+            "aguardando": atendimentos_hoje.filter(status=Atendimento.Status.AGUARDANDO).count(),
+            "em_atendimento": atendimentos_hoje.filter(status=Atendimento.Status.EM_ATENDIMENTO).count(),
+            "concluidos": atendimentos_hoje.filter(status=Atendimento.Status.CONCLUIDO).count(),
+            "tendencia_7dias": tendencia_7dias,
+        }
+
+    # --- Médico ---
+    if tem_permissao(request.user, "atendimento.atender"):
+        meus = Atendimento.objects.filter(hospital=hospital, profissional=request.user, criado_em__date=hoje)
+        contexto["medico"] = {
+            "meus_hoje": meus.count(),
+            "aguardando": meus.filter(status=Atendimento.Status.AGUARDANDO).count(),
+            "em_atendimento": meus.filter(status=Atendimento.Status.EM_ATENDIMENTO).count(),
+            "concluidos": meus.filter(status=Atendimento.Status.CONCLUIDO).count(),
+            "prescricoes_criadas": PrescricaoMedicamento.objects.filter(hospital=hospital, medico=request.user, criado_em__date=hoje).count(),
+        }
+
+    # --- Enfermeiro (Triagem) ---
+    if tem_permissao(request.user, "atendimento.triagem"):
+        contexto["enfermeiro"] = {
+            "por_triar": Atendimento.objects.filter(
+                hospital=hospital,
+                status__in=[Atendimento.Status.AGUARDANDO, Atendimento.Status.EM_ATENDIMENTO],
+                criado_em__date=hoje,
+            ).count(),
+        }
+
+    # --- Farmacêutico ---
+    if tem_permissao(request.user, "medicamento.gerir") or tem_permissao(request.user, "lote.gerir"):
+        lotes_hospital = Lote.objects.filter(hospital=hospital, quantidade__gt=0)
+        stock_map = {}
+        for item in lotes_hospital.values("medicamento_id").annotate(total=Sum("quantidade")):
+            stock_map[item["medicamento_id"]] = item["total"]
+
+        limiar_critico = 10
+        total_ativos = 0
+        esgotados = 0
+        criticos = 0
+        for medicamento_id in Medicamento.objects.filter(ativo=True).values_list("id", flat=True):
+            total_ativos += 1
+            total = stock_map.get(medicamento_id, 0)
+            if total == 0:
+                esgotados += 1
+            elif total <= limiar_critico:
+                criticos += 1
+
+        contexto["farmacia"] = {
+            "total_ativos": total_ativos,
+            "esgotados": esgotados,
+            "criticos": criticos,
+            "ok": max(total_ativos - esgotados - criticos, 0),
+            "lotes_a_vencer": lotes_hospital.filter(validade__lte=hoje + timedelta(days=30)).count(),
+            "receitas_pendentes": PrescricaoMedicamento.objects.filter(
+                hospital=hospital, status=PrescricaoMedicamento.Status.AGUARDANDO
+            ).count(),
+        }
+
+    # --- Técnico de Laboratório ---
+    if tem_permissao(request.user, "solicitacao.gerir"):
+        contexto["laboratorio"] = {
+            "aguardando": SolicitacaoExame.objects.filter(hospital=hospital, status=SolicitacaoExame.Status.AGUARDANDO).count(),
+            "coletado": SolicitacaoExame.objects.filter(hospital=hospital, status=SolicitacaoExame.Status.COLETADO).count(),
+            "pendentes": SolicitacaoExame.objects.filter(
+                hospital=hospital,
+                status__in=[SolicitacaoExame.Status.AGUARDANDO, SolicitacaoExame.Status.COLETADO],
+            ).count(),
+        }
+
+    # --- Internamento ---
+    if tem_permissao(request.user, "nave.gerir") or tem_permissao(request.user, "internamento.gerir"):
+        total_capacidade = Quarto.objects.filter(
+            nave__hospital=hospital, ativo=True
+        ).aggregate(total=Sum("capacidade"))["total"] or 0
+
+        total_ocupados = Internamento.objects.filter(
+            hospital=hospital,
+            status=Internamento.Status.INTERNADO,
+        ).count()
+
+        contexto["internamento"] = {
+            "internados": total_ocupados,
+            "vagas_disponiveis": max(total_capacidade - total_ocupados, 0),
+        }
+
+    return render(request, "dashboard/painel.html", contexto)
 
 
 @login_required
