@@ -1,11 +1,12 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import ProtectedError, Sum
+from django.db.models import ProtectedError, Sum, Count, Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 
 from App_Usuarios.permissoes import requer_permissao
 from App_Atendimentos.atendimento import Atendimento
+from App_Pacientes.documento import DocumentoPaciente
 
 from .nave import Nave
 from .quarto import Quarto
@@ -26,7 +27,9 @@ def _contexto_painel_internamento(request):
         ).select_related("paciente", "quarto", "quarto__nave", "medico_responsavel").order_by("-data_entrada")
 
     total_capacidade = quartos.aggregate(total=Sum("capacidade"))["total"] or 0
-    total_ocupados = sum(q.ocupados for q in quartos)
+    total_ocupados = Internamento.objects.filter(
+        hospital=request.user.hospital, status=Internamento.Status.INTERNADO
+    ).count() if request.user.hospital else 0
 
     return {
         "naves": naves,
@@ -208,7 +211,12 @@ def listar_quartos_disponiveis(request):
 
     quartos = Quarto.objects.filter(
         nave__hospital=request.user.hospital, ativo=True
-    ).select_related("nave").order_by("nave__nome", "numero")
+    ).select_related("nave").annotate(
+        ocupados_count=Count(
+            "internamentos",
+            filter=Q(internamentos__status=Internamento.Status.INTERNADO),
+        )
+    ).order_by("nave__nome", "numero")
 
     return JsonResponse({
         "ok": True,
@@ -218,9 +226,9 @@ def listar_quartos_disponiveis(request):
                 "nave": q.nave.nome,
                 "numero": q.numero,
                 "tipo": q.get_tipo_display(),
-                "vagas_disponiveis": q.vagas_disponiveis,
+                "vagas_disponiveis": max(q.capacidade - q.ocupados_count, 0),
             }
-            for q in quartos if q.vagas_disponiveis > 0
+            for q in quartos if q.capacidade > q.ocupados_count
         ]
     })
 
@@ -306,22 +314,22 @@ def listar_internados(request):
         status=Internamento.Status.INTERNADO,
     ).select_related("paciente", "quarto", "quarto__nave", "medico_responsavel").order_by("-data_entrada")
 
-    return JsonResponse({
-        "ok": True,
-        "internamentos": [
-            {
-                "id": i.id,
-                "paciente": i.paciente.nome_completo,
-                "paciente_codigo": i.paciente.codigo,
-                "nave": i.quarto.nave.nome,
-                "quarto": i.quarto.numero,
-                "medico": i.medico_responsavel.nome_completo,
-                "data_entrada": i.data_entrada.isoformat(),
-                "motivo": i.motivo,
-            }
-            for i in internamentos
-        ]
-    })
+    resultado = []
+    for i in internamentos:
+        documento_bi = i.paciente.documentos.filter(tipo=DocumentoPaciente.TipoDocumento.BI).first()
+        resultado.append({
+            "id": i.id,
+            "paciente": i.paciente.nome_completo,
+            "paciente_codigo": i.paciente.codigo,
+            "bi": documento_bi.numero if documento_bi else "",
+            "nave": i.quarto.nave.nome,
+            "quarto": i.quarto.numero,
+            "medico": i.medico_responsavel.nome_completo,
+            "data_entrada": i.data_entrada.isoformat(),
+            "motivo": i.motivo,
+        })
+
+    return JsonResponse({"ok": True, "internamentos": resultado})
 
 
 @login_required

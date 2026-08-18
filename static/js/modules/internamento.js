@@ -5,11 +5,15 @@ const INTERNAMENTO_URLS = {
     naveEliminar: (id) => `/modulos/internamento/naves/${id}/eliminar/`,
     quartoCadastrar: "/modulos/internamento/quartos/cadastrar/",
     quartoEliminar: (id) => `/modulos/internamento/quartos/${id}/eliminar/`,
+    internados: "/modulos/internamento/internados/",
+    darAlta: (id) => `/modulos/internamento/${id}/alta/`,
     modulo: "/modulos/internamento/",
 };
 
 window.moduleInitializers = window.moduleInitializers || {};
-window.moduleInitializers.internamento = function () { };
+window.moduleInitializers.internamento = function () {
+    atualizarBadgeInternados();
+};
 
 function internamentoCsrfToken() {
     const nome = "csrftoken=";
@@ -125,5 +129,93 @@ async function eliminarQuarto(id, numero) {
     }
 
     window.showToast(dados.mensagem, "sucesso");
+    internamentoRecarregarPainel();
+}
+
+// -------------------------------------------------------------------------
+// Internados (lista + Dar Alta)
+// -------------------------------------------------------------------------
+
+function internamentoFormatarDataHora(isoString) {
+    if (!isoString) return "—";
+    const data = new Date(isoString);
+    return data.toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+async function atualizarBadgeInternados() {
+    try {
+        const resposta = await fetch(INTERNAMENTO_URLS.internados);
+        const dados = await resposta.json();
+        const badge = document.getElementById("internados-badge");
+        if (!badge) return;
+
+        const total = dados.ok ? dados.internamentos.length : 0;
+        badge.textContent = total;
+        badge.classList.toggle("hidden", total === 0);
+    } catch (erro) {
+        // silencioso
+    }
+}
+
+function openInternadosModal() {
+    document.getElementById("modal-internados").classList.remove("hidden");
+    document.getElementById("input-search-internados").value = "";
+    carregarInternados();
+}
+
+function closeInternadosModal() {
+    document.getElementById("modal-internados").classList.add("hidden");
+}
+
+async function carregarInternados() {
+    const corpo = document.getElementById("internados-body");
+    corpo.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
+
+    try {
+        const resposta = await fetch(INTERNAMENTO_URLS.internados);
+        const dados = await resposta.json();
+
+        if (!dados.ok || dados.internamentos.length === 0) {
+            corpo.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-400">Ninguém internado neste momento.</td></tr>`;
+            return;
+        }
+
+        corpo.innerHTML = dados.internamentos.map((i) => `
+            <tr class="hover:bg-gray-50/50 transition" data-search="${i.paciente.toLowerCase()} ${i.paciente_codigo.toLowerCase()} ${(i.bi || "").toLowerCase()}">
+                <td class="py-4 px-4 font-medium">${i.paciente}</td>
+                <td class="py-4 px-4 text-gray-500">${i.bi || "—"}</td>
+                <td class="py-4 px-4 text-gray-500">${i.nave} — Quarto ${i.quarto}</td>
+                <td class="py-4 px-4 text-gray-500">${i.medico}</td>
+                <td class="py-4 px-4 text-gray-500 whitespace-nowrap">${internamentoFormatarDataHora(i.data_entrada)}</td>
+                <td class="py-4 px-4 text-right">
+                    <button class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="confirmarAlta(${i.id}, '${i.paciente.replace(/'/g, "\\'")}')">Dar Alta</button>
+                </td>
+            </tr>
+        `).join("");
+    } catch (erro) {
+        corpo.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-400">Erro ao carregar internados.</td></tr>`;
+    }
+}
+
+function filterInternados(termo) {
+    const alvo = termo.trim().toLowerCase();
+    document.querySelectorAll("#internados-body tr[data-search]").forEach((linha) => {
+        linha.style.display = linha.dataset.search.includes(alvo) ? "" : "none";
+    });
+}
+
+async function confirmarAlta(id, nome) {
+    if (!confirm(`Confirmar alta de ${nome}? O quarto ficará com uma vaga livre.`)) return;
+
+    const dados = await internamentoEnviar(INTERNAMENTO_URLS.darAlta(id), new FormData());
+
+    if (!dados.ok) {
+        window.showToast(dados.erro, "erro");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    carregarInternados();
+    atualizarBadgeInternados();
     internamentoRecarregarPainel();
 }
