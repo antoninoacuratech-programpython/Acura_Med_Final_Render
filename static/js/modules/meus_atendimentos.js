@@ -380,6 +380,46 @@ async function carregarResultados() {
     }
 }
 
+function renderizarParametrosResultado(item) {
+    const grupos = {};
+    item.parametros.forEach((p) => {
+        const chave = p.subgrupo || "GERAL";
+        if (!grupos[chave]) grupos[chave] = [];
+        grupos[chave].push(p);
+    });
+
+    let html = "";
+
+    Object.keys(grupos).forEach((subgrupo) => {
+        const linhas = grupos[subgrupo];
+
+        html += `
+            <div class="bg-[#2D3250] text-white px-4 py-2 text-xs font-bold uppercase tracking-wider">${subgrupo}</div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-100 bg-gray-50">
+                        <th class="py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Parâmetro</th>
+                        <th class="py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Resultado</th>
+                        <th class="py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Unidade</th>
+                        <th class="py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Referência</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 text-sm">
+                    ${linhas.map((p) => `
+                        <tr>
+                            <td class="py-2.5 px-4 font-medium text-gray-800">${p.nome}</td>
+                            <td class="py-2.5 px-4 font-semibold text-gray-800">${p.valor || "—"}</td>
+                            <td class="py-2.5 px-4 text-gray-500">${p.unidade || "—"}</td>
+                            <td class="py-2.5 px-4 text-gray-500">${p.referencia || "—"}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>`;
+    });
+
+    return html;
+}
+
 async function abrirDetalheResultado(id) {
     document.getElementById("modal-detalhe-resultado").classList.remove("hidden");
     const container = document.getElementById("resultado-itens-container");
@@ -397,14 +437,27 @@ async function abrirDetalheResultado(id) {
         const s = dados.solicitacao;
         document.getElementById("resultado-paciente-nome").textContent = s.paciente;
 
-        container.innerHTML = s.itens.map((item) => `
-            <div class="border border-gray-200 rounded-xl p-4">
-                <p class="font-semibold text-gray-800">${item.tipo_exame}</p>
-                <p class="text-xs text-gray-400 mb-2">${item.categoria}${item.valor_referencia ? " — Ref.: " + item.valor_referencia : ""}${item.unidade_medida ? " " + item.unidade_medida : ""}</p>
-                <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">${item.resultado || "—"}</p>
-                <p class="text-xs text-gray-400 mt-2">Resultado registado em ${meusAtendimentosFormatarDataHora(item.data_resultado)}</p>
-            </div>
-        `).join("");
+        container.innerHTML = s.itens.map((item) => {
+            if (item.tipo_resultado_exame === "MULTIPARAMETRO") {
+                return `
+                    <div class="border border-gray-200 rounded-xl overflow-hidden">
+                        <div class="p-4">
+                            <p class="font-semibold text-gray-800">${item.tipo_exame}</p>
+                            <p class="text-xs text-gray-400">${item.departamento}</p>
+                        </div>
+                        ${renderizarParametrosResultado(item)}
+                        <p class="text-xs text-gray-400 px-4 py-2 border-t border-gray-100">Resultado registado em ${meusAtendimentosFormatarDataHora(item.data_resultado)}</p>
+                    </div>`;
+            }
+
+            return `
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <p class="font-semibold text-gray-800">${item.tipo_exame}</p>
+                    <p class="text-xs text-gray-400 mb-2">${item.departamento}</p>
+                    <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">${item.resultado || "—"}</p>
+                    <p class="text-xs text-gray-400 mt-2">Resultado registado em ${meusAtendimentosFormatarDataHora(item.data_resultado)}</p>
+                </div>`;
+        }).join("");
     } catch (erro) {
         container.innerHTML = `<p class="text-center text-gray-400 py-6">Erro ao carregar o resultado.</p>`;
     }

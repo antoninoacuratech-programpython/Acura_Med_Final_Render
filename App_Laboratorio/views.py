@@ -635,6 +635,37 @@ def detalhe_resultado_exame(request, id):
     except SolicitacaoExame.DoesNotExist:
         return JsonResponse({"ok": False, "erro": "Solicitação não encontrada."}, status=404)
 
+    itens_json = []
+    for item in solicitacao.itens.select_related("tipo_exame").all():
+        item_data = {
+            "tipo_exame": item.tipo_exame.nome,
+            "departamento": item.tipo_exame.get_departamento_display(),
+            "tipo_resultado_exame": item.tipo_exame.tipo_resultado,
+            "resultado": item.resultado,
+            "data_resultado": item.data_resultado.isoformat() if item.data_resultado else None,
+        }
+
+        if item.tipo_exame.tipo_resultado == TipoExame.TipoResultado.MULTIPARAMETRO:
+            resultados_existentes = {
+                rp.parametro_id: rp.valor for rp in item.resultados_parametro.all()
+            }
+            ligacoes = ExameParametro.objects.filter(
+                tipo_exame=item.tipo_exame
+            ).select_related("parametro").order_by("ordem")
+
+            item_data["parametros"] = [
+                {
+                    "nome": lig.parametro.nome,
+                    "unidade": lig.unidade or lig.parametro.unidade,
+                    "subgrupo": lig.subgrupo,
+                    "referencia": _formatar_referencia(_referencia_para_paciente(lig.parametro, solicitacao.paciente)),
+                    "valor": resultados_existentes.get(lig.parametro.id, ""),
+                }
+                for lig in ligacoes
+            ]
+
+        itens_json.append(item_data)
+
     return JsonResponse({
         "ok": True,
         "solicitacao": {
@@ -642,15 +673,7 @@ def detalhe_resultado_exame(request, id):
             "paciente": solicitacao.paciente.nome_completo,
             "paciente_codigo": solicitacao.paciente.codigo,
             "status_display": solicitacao.get_status_display(),
-            "itens": [
-                {
-                    "tipo_exame": item.tipo_exame.nome,
-                    "departamento": item.tipo_exame.get_departamento_display(),
-                    "resultado": item.resultado,
-                    "data_resultado": item.data_resultado.isoformat() if item.data_resultado else None,
-                }
-                for item in solicitacao.itens.select_related("tipo_exame").all()
-            ]
+            "itens": itens_json,
         }
     })
 
