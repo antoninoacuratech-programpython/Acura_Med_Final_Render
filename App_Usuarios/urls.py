@@ -431,6 +431,29 @@ urlpatterns = [
         laboratorio_views.detalhe_resultado_exame,
         name="detalhe_resultado_exame"
     ),
+    path(
+        "modulos/laboratorio/exames/<int:tipo_exame_id>/parametros/",
+        laboratorio_views.listar_parametros_exame,
+        name="listar_parametros_exame"
+    ),
+
+    path(
+        "modulos/laboratorio/exames/<int:tipo_exame_id>/parametros/salvar/",
+        laboratorio_views.salvar_parametro_exame,
+        name="salvar_parametro_exame"
+    ),
+
+    path(
+        "modulos/laboratorio/parametros/<int:id>/",
+        laboratorio_views.detalhe_parametro_exame,
+        name="detalhe_parametro_exame"
+    ),
+
+    path(
+        "modulos/laboratorio/parametros/<int:id>/eliminar/",
+        laboratorio_views.eliminar_parametro_exame,
+        name="eliminar_parametro_exame"
+    ),
     # 1) urls.py — no topo:
 #    
 #

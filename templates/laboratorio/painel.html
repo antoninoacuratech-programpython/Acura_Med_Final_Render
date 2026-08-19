@@ -69,6 +69,9 @@
 </span>
 </td>
 <td class="py-4 px-4 text-right whitespace-nowrap">
+<button class="w-8 h-8 rounded-full inline-flex items-center justify-center text-gray-400 hover:text-teal-600 hover:bg-gray-100 transition" onclick="gerirParametros({{ e.id }}, '{{ e.nome|escapejs }}')" title="Parâmetros">
+<i class="fa-solid fa-list-ol text-xs"></i>
+</button>
 <button class="w-8 h-8 rounded-full inline-flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition" onclick="editarExame({{ e.id }})" title="Editar">
 <i class="fa-solid fa-pen text-xs"></i>
 </button>
