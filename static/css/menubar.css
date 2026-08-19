@@ -68,7 +68,7 @@
 
 /* Aplica o fundo APENAS ao botão pai, nunca ao submenu */
 .sidebar-menu>li>a:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: #2D3250;
     color: #ffffff;
 }
 
@@ -136,7 +136,7 @@
 
 /* Hover individual e isolado nos itens do Submenu */
 .sidebar-menu .submenu li a:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: #2D3250;
     color: #ffffff;
     transform: translateX(3px);
     /* Pequeno slide indicativo */
@@ -163,6 +163,6 @@
 }
 
 .sidebar-menu-bottom a:hover {
-    background: rgba(220, 38, 38, 0.2) !important;
+    background: #2D3250;
     color: #ffffff !important;
 }
