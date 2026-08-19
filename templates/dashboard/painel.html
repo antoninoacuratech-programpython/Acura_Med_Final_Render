@@ -87,7 +87,7 @@
 
 <div class="db-hero">
     <div>
-        <h1>Olá, {{ request.user.primeiro_nome }} 👋</h1>
+        <h1>Olá, {{ request.user.primeiro_nome }} {{ request.user.ultimo_nome }}</h1>
         <p>{{ hoje|date:"l, d \d\e F \d\e Y"|capfirst }}</p>
     </div>
 </div>
