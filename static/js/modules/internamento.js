@@ -1,5 +1,4 @@
-// static/js/modules/internamento.js
-
+// static/js/modules/internamento.js                                                                       
 const INTERNAMENTO_URLS = {
     naveCadastrar: "/modulos/internamento/naves/cadastrar/",
     naveEliminar: (id) => `/modulos/internamento/naves/${id}/eliminar/`,
