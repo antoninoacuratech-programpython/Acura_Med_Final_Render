@@ -3,11 +3,9 @@ from django.db.models import ProtectedError, Sum, Count, Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
-
 from App_Usuarios.permissoes import requer_permissao
 from App_Atendimentos.atendimento import Atendimento
 from App_Pacientes.documento import DocumentoPaciente
-
 from .nave import Nave
 from .quarto import Quarto
 from .internamento import Internamento
