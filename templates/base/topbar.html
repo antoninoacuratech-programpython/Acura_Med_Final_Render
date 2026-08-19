@@ -3,8 +3,11 @@
     <div class="topbar-brand"><img src="{% static 'icons/acuramed_empty-2.png' %}" alt="ACURA MED"></div>
     <div class="topbar-title"><h2 id="pageTitle">Visão Geral</h2></div>
     <div class="topbar-actions">
+        <div class="user-container">
+  <span class="user-name">{{request.user.primeiro_nome}} {{request.user.ultimo_nome}}</span>
+</div>
         <button class="icon-btn" id="settingsBtn" title="Configurações"><i class="fa-solid fa-gear"></i></button>
-        <div class="notification-container">
+
             <button class="icon-btn" id="notificationBtn" title="Notificações"><i class="fa-solid fa-bell"></i></button>
             <div class="notification-dropdown" id="notificationDropdownMenu">
                 <div class="notification-header"><span>Notificações</span><span class="notification-badge">2 novas</span></div>
