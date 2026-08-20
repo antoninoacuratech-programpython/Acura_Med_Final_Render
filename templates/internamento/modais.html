@@ -228,3 +228,99 @@
 </div>
 </div>
 </div>
+
+<!-- Modal: Prescrever / Solicitar Exame durante o Internamento -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-prescricao-exame-internamento">
+<div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-file-medical text-lg"></i>
+<h3 class="font-bold text-lg">Prescrever / Pedir Exame — <span id="pei-paciente-nome"></span></h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closePrescricaoExameInternamentoModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+
+<!-- Secção Prescrição -->
+<div>
+<h4 class="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3 flex items-center gap-2"><i class="fa-solid fa-file-prescription text-[#F36A2D]"></i> Nova Prescrição</h4>
+<div id="itens-prescricao-internamento" class="space-y-3"></div>
+<button class="flex items-center gap-2 text-sm font-medium text-[#F36A2D] hover:underline mt-2" onclick="adicionarLinhaPrescricaoInternamento()" type="button">
+<i class="fa-solid fa-circle-plus"></i> Adicionar medicamento
+</button>
+<div class="hidden bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3 mt-3" id="modalErroPrescricaoInternamento"></div>
+<div class="flex justify-end mt-3">
+<button class="px-5 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm" onclick="submitPrescricaoInternamento()" type="button">
+                        Enviar à Farmácia
+                    </button>
+</div>
+</div>
+
+<!-- Secção Solicitação de Exame -->
+<div class="pt-4 border-t border-gray-100">
+<h4 class="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3 flex items-center gap-2"><i class="fa-solid fa-flask-vial text-[#F36A2D]"></i> Nova Solicitação de Exame</h4>
+<div id="itens-exame-internamento" class="space-y-3"></div>
+<button class="flex items-center gap-2 text-sm font-medium text-[#F36A2D] hover:underline mt-2" onclick="adicionarLinhaExameInternamento()" type="button">
+<i class="fa-solid fa-circle-plus"></i> Adicionar exame
+</button>
+<div class="hidden bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3 mt-3" id="modalErroExameInternamento"></div>
+<div class="flex justify-end mt-3">
+<button class="px-5 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm" onclick="submitExameInternamento()" type="button">
+                        Enviar ao Laboratório
+                    </button>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- Template de linha de medicamento -->
+<template id="template-linha-prescricao-internamento">
+<div class="grid grid-cols-12 gap-2 items-start border border-gray-200 rounded-xl p-3 linha-prescricao-internamento">
+<div class="col-span-6 space-y-1">
+<select class="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="item_medicamento_id[]" required>
+<option value="">Medicamento...</option>
+{% for m in medicamentos %}
+<option value="{{ m.id }}">{{ m.nome }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="col-span-2 space-y-1">
+<input class="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="item_dosagem[]" placeholder="Dosagem" type="text"/>
+</div>
+<div class="col-span-2 space-y-1">
+<input class="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="item_frequencia[]" placeholder="Frequência" type="text"/>
+</div>
+<div class="col-span-1 space-y-1">
+<input class="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" min="1" name="item_quantidade[]" placeholder="Qtd" required type="number"/>
+</div>
+<div class="col-span-1 flex justify-end pt-1.5">
+<button class="text-red-500 hover:text-red-700 text-xs" onclick="this.closest('.linha-prescricao-internamento').remove()" type="button">
+<i class="fa-solid fa-trash-can"></i>
+</button>
+</div>
+</div>
+</template>
+
+<!-- Template de linha de exame -->
+<template id="template-linha-exame-internamento">
+<div class="grid grid-cols-12 gap-2 items-start border border-gray-200 rounded-xl p-3 linha-exame-internamento">
+<div class="col-span-10 space-y-1">
+<select class="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" name="item_tipo_exame_id[]" required>
+<option value="">Exame...</option>
+{% for e in exames %}
+<option value="{{ e.id }}">{{ e.nome }} — {{ e.get_departamento_display }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="col-span-1"></div>
+<div class="col-span-1 flex justify-end pt-1.5">
+<button class="text-red-500 hover:text-red-700 text-xs" onclick="this.closest('.linha-exame-internamento').remove()" type="button">
+<i class="fa-solid fa-trash-can"></i>
+</button>
+</div>
+</div>
+</template>

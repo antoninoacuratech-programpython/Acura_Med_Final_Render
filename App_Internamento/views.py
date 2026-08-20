@@ -8,6 +8,7 @@ from App_Usuarios.permissoes import requer_permissao
 from App_Atendimentos.atendimento import Atendimento
 from App_Pacientes.documento import DocumentoPaciente
 from App_Farmacia.medicamento import Medicamento
+from App_Laboratorio.tipo_exame import TipoExame
 
 from .nave import Nave
 from .quarto import Quarto
@@ -44,6 +45,7 @@ def _contexto_painel_internamento(request):
         "total_internados": internados.count(),
         "quarto_tipos": Quarto.Tipo.choices,
         "medicamentos": Medicamento.objects.filter(ativo=True).order_by("nome"),
+        "exames": TipoExame.objects.filter(ativo=True).order_by("nome"),
     }
 
 
@@ -322,6 +324,7 @@ def listar_internados(request):
         documento_bi = i.paciente.documentos.filter(tipo=DocumentoPaciente.TipoDocumento.BI).first()
         resultado.append({
             "id": i.id,
+            "atendimento_id": i.atendimento_id,
             "paciente": i.paciente.nome_completo,
             "paciente_codigo": i.paciente.codigo,
             "bi": documento_bi.numero if documento_bi else "",

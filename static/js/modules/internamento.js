@@ -190,6 +190,7 @@ async function carregarInternados() {
                 <td class="py-4 px-4 text-gray-500">${i.medico}</td>
                 <td class="py-4 px-4 text-gray-500 whitespace-nowrap">${internamentoFormatarDataHora(i.data_entrada)}</td>
                 <td class="py-4 px-4 text-right">
+                    <button class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="abrirPrescricaoExameInternamento(${i.atendimento_id}, '${i.paciente.replace(/'/g, "\\'")}')">Prescrever / Exame</button>
                     <button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="abrirEvolucao(${i.id}, '${i.paciente.replace(/'/g, "\\'")}')">Evolução</button>
                     <button class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="confirmarAlta(${i.id}, '${i.paciente.replace(/'/g, "\\'")}')">Dar Alta</button>
                 </td>
@@ -348,4 +349,94 @@ async function submitEvolucao() {
     window.showToast(dados.mensagem, "sucesso");
     document.getElementById("evolucao-texto").value = "";
     carregarEvolucoes();
+}
+
+// -------------------------------------------------------------------------
+// Prescrever / Solicitar Exame durante o Internamento
+// -------------------------------------------------------------------------
+
+let peiAtendimentoId = null;
+
+function abrirPrescricaoExameInternamento(atendimentoId, nomePaciente) {
+    peiAtendimentoId = atendimentoId;
+    document.getElementById("pei-paciente-nome").textContent = nomePaciente;
+    document.getElementById("itens-prescricao-internamento").innerHTML = "";
+    document.getElementById("itens-exame-internamento").innerHTML = "";
+    document.getElementById("modalErroPrescricaoInternamento").classList.add("hidden");
+    document.getElementById("modalErroExameInternamento").classList.add("hidden");
+    adicionarLinhaPrescricaoInternamento();
+    adicionarLinhaExameInternamento();
+    document.getElementById("modal-prescricao-exame-internamento").classList.remove("hidden");
+}
+
+function closePrescricaoExameInternamentoModal() {
+    document.getElementById("modal-prescricao-exame-internamento").classList.add("hidden");
+    peiAtendimentoId = null;
+}
+
+function adicionarLinhaPrescricaoInternamento() {
+    const template = document.getElementById("template-linha-prescricao-internamento");
+    document.getElementById("itens-prescricao-internamento").appendChild(template.content.cloneNode(true));
+}
+
+function adicionarLinhaExameInternamento() {
+    const template = document.getElementById("template-linha-exame-internamento");
+    document.getElementById("itens-exame-internamento").appendChild(template.content.cloneNode(true));
+}
+
+async function submitPrescricaoInternamento() {
+    const erroEl = document.getElementById("modalErroPrescricaoInternamento");
+    erroEl.classList.add("hidden");
+
+    if (!document.getElementById("itens-prescricao-internamento").children.length) {
+        erroEl.textContent = "Adicione pelo menos um medicamento.";
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("prescricao_atendimento_id", peiAtendimentoId);
+    document.querySelectorAll("#itens-prescricao-internamento select[name='item_medicamento_id[]']").forEach((el) => formData.append("item_medicamento_id[]", el.value));
+    document.querySelectorAll("#itens-prescricao-internamento input[name='item_dosagem[]']").forEach((el) => formData.append("item_dosagem[]", el.value));
+    document.querySelectorAll("#itens-prescricao-internamento input[name='item_frequencia[]']").forEach((el) => formData.append("item_frequencia[]", el.value));
+    document.querySelectorAll("#itens-prescricao-internamento input[name='item_quantidade[]']").forEach((el) => formData.append("item_quantidade[]", el.value));
+
+    const dados = await internamentoEnviar("/modulos/prescricoes/cadastrar/", formData);
+
+    if (!dados.ok) {
+        erroEl.textContent = dados.erro;
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    document.getElementById("itens-prescricao-internamento").innerHTML = "";
+    adicionarLinhaPrescricaoInternamento();
+}
+
+async function submitExameInternamento() {
+    const erroEl = document.getElementById("modalErroExameInternamento");
+    erroEl.classList.add("hidden");
+
+    if (!document.getElementById("itens-exame-internamento").children.length) {
+        erroEl.textContent = "Adicione pelo menos um exame.";
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("solicitacao_atendimento_id", peiAtendimentoId);
+    document.querySelectorAll("#itens-exame-internamento select[name='item_tipo_exame_id[]']").forEach((el) => formData.append("item_tipo_exame_id[]", el.value));
+
+    const dados = await internamentoEnviar("/modulos/laboratorio/solicitacoes/cadastrar/", formData);
+
+    if (!dados.ok) {
+        erroEl.textContent = dados.erro;
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    document.getElementById("itens-exame-internamento").innerHTML = "";
+    adicionarLinhaExameInternamento();
 }
