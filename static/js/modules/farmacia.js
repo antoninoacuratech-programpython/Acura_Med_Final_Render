@@ -18,6 +18,10 @@ const FARMACIA_URLS = {
     prescricaoDetalhe: (id) => `/modulos/farmacia/prescricoes/${id}/`,
     prescricaoDispensar: (id) => `/modulos/farmacia/prescricoes/${id}/dispensar/`,
     prescricaoPendencia: (id) => `/modulos/farmacia/prescricoes/${id}/pendencia/`,
+    requisicoes: "/modulos/farmacia/requisicoes/",
+    requisicaoDetalhe: (id) => `/modulos/farmacia/requisicoes/${id}/`,
+    requisicaoEntregar: (id) => `/modulos/farmacia/requisicoes/${id}/entregar/`,
+    requisicaoRejeitar: (id) => `/modulos/farmacia/requisicoes/${id}/rejeitar/`,
     modulo: "/modulos/farmacia/",
 };
 
@@ -26,6 +30,7 @@ window.moduleInitializers.farmacia = function () {
     const busca = document.getElementById("input-search-medicamento");
     if (busca) busca.value = "";
     atualizarBadgeReceitas();
+    atualizarBadgeRequisicoes();
 };
 
 // -------------------------------------------------------------------------
@@ -266,6 +271,21 @@ function closeHistoricoModal() {
     document.getElementById("modal-historico").classList.add("hidden");
 }
 
+function exportarHistoricoPdf() {
+    const params = new URLSearchParams();
+    const medicamentoId = document.getElementById("historico-filtro-medicamento").value;
+    const tipo = document.getElementById("historico-filtro-tipo").value;
+    const dataInicio = document.getElementById("historico-filtro-data-inicio").value;
+    const dataFim = document.getElementById("historico-filtro-data-fim").value;
+
+    if (medicamentoId) params.set("medicamento_id", medicamentoId);
+    if (tipo) params.set("tipo", tipo);
+    if (dataInicio) params.set("data_inicio", dataInicio);
+    if (dataFim) params.set("data_fim", dataFim);
+
+    window.open(`/modulos/farmacia/relatorios/movimentos/pdf/?${params.toString()}`, "_blank");
+}
+
 async function carregarHistorico() {
     const corpo = document.getElementById("historico-body");
     corpo.innerHTML = `<tr><td colspan="7" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
@@ -484,4 +504,150 @@ async function confirmarPendenciaReceita() {
     closeDetalheReceitaModal();
     carregarReceitas();
     atualizarBadgeReceitas();
+}
+
+// -------------------------------------------------------------------------
+// Requisições Internas (sector → Farmácia)
+// -------------------------------------------------------------------------
+
+let requisicaoAtualId = null;
+
+async function atualizarBadgeRequisicoes() {
+    try {
+        const resposta = await fetch(FARMACIA_URLS.requisicoes);
+        const dados = await resposta.json();
+        const badge = document.getElementById("requisicoes-badge");
+        if (!badge) return;
+
+        const total = dados.ok ? dados.requisicoes.length : 0;
+        badge.textContent = total;
+        badge.classList.toggle("hidden", total === 0);
+    } catch (erro) {
+        // silencioso
+    }
+}
+
+function openRequisicoesModal() {
+    document.getElementById("modal-requisicoes").classList.remove("hidden");
+    carregarRequisicoes();
+}
+
+function closeRequisicoesModal() {
+    document.getElementById("modal-requisicoes").classList.add("hidden");
+}
+
+async function carregarRequisicoes() {
+    const corpo = document.getElementById("requisicoes-body");
+    corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
+
+    try {
+        const resposta = await fetch(FARMACIA_URLS.requisicoes);
+        const dados = await resposta.json();
+
+        if (!dados.ok || dados.requisicoes.length === 0) {
+            corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">Nenhuma requisição pendente.</td></tr>`;
+            return;
+        }
+
+        corpo.innerHTML = dados.requisicoes.map((r) => `
+            <tr class="hover:bg-gray-50/50 transition">
+                <td class="py-4 px-4 font-medium">${r.origem}</td>
+                <td class="py-4 px-4 text-gray-500">${r.solicitante}</td>
+                <td class="py-4 px-4 text-gray-500">${r.total_itens}</td>
+                <td class="py-4 px-4 text-gray-500 whitespace-nowrap">${farmaciaFormatarDataHora(r.criado_em)}</td>
+                <td class="py-4 px-4 text-right">
+                    <button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="abrirDetalheRequisicao(${r.id})">Ver</button>
+                </td>
+            </tr>
+        `).join("");
+    } catch (erro) {
+        corpo.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">Erro ao carregar requisições.</td></tr>`;
+    }
+}
+
+async function abrirDetalheRequisicao(id) {
+    requisicaoAtualId = id;
+    document.getElementById("modalErroRequisicao").classList.add("hidden");
+    document.getElementById("modal-detalhe-requisicao").classList.remove("hidden");
+
+    const corpo = document.getElementById("requisicao-itens-body");
+    corpo.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-gray-400">A carregar...</td></tr>`;
+
+    try {
+        const resposta = await fetch(FARMACIA_URLS.requisicaoDetalhe(id));
+        const dados = await resposta.json();
+
+        if (!dados.ok) {
+            corpo.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-gray-400">Erro ao carregar a requisição.</td></tr>`;
+            return;
+        }
+
+        const r = dados.requisicao;
+        document.getElementById("requisicao-origem-nome").textContent = r.origem;
+        document.getElementById("requisicao-info-solicitante").textContent = r.solicitante;
+        document.getElementById("requisicao-info-estado").textContent = r.status_display;
+
+        corpo.innerHTML = r.itens.map((item) => {
+            const badge = item.stock_suficiente
+                ? `<span class="bg-teal-50 text-teal-600 text-xs font-medium px-3 py-1 rounded-full">Disponível (${item.stock_disponivel})</span>`
+                : `<span class="bg-red-50 text-red-600 text-xs font-medium px-3 py-1 rounded-full">Insuficiente (${item.stock_disponivel})</span>`;
+
+            return `
+                <tr>
+                    <td class="py-3 px-4 font-medium">${item.medicamento}</td>
+                    <td class="py-3 px-4 text-gray-500">${item.quantidade_solicitada}</td>
+                    <td class="py-3 px-4">${badge}</td>
+                </tr>`;
+        }).join("");
+
+        document.getElementById("btnEntregarRequisicao").disabled = !r.pode_entregar;
+    } catch (erro) {
+        corpo.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-gray-400">Erro ao carregar a requisição.</td></tr>`;
+    }
+}
+
+function closeDetalheRequisicaoModal() {
+    document.getElementById("modal-detalhe-requisicao").classList.add("hidden");
+    requisicaoAtualId = null;
+}
+
+async function entregarRequisicao() {
+    if (!requisicaoAtualId) return;
+    const erroEl = document.getElementById("modalErroRequisicao");
+    erroEl.classList.add("hidden");
+
+    const dados = await farmaciaEnviar(FARMACIA_URLS.requisicaoEntregar(requisicaoAtualId), new FormData());
+
+    if (!dados.ok) {
+        erroEl.textContent = dados.erro;
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    closeDetalheRequisicaoModal();
+    carregarRequisicoes();
+    atualizarBadgeRequisicoes();
+    farmaciaRecarregarPainel();
+}
+
+async function rejeitarRequisicao() {
+    if (!requisicaoAtualId) return;
+    if (!confirm("Rejeitar esta requisição?")) return;
+
+    const erroEl = document.getElementById("modalErroRequisicao");
+    erroEl.classList.add("hidden");
+
+    const dados = await farmaciaEnviar(FARMACIA_URLS.requisicaoRejeitar(requisicaoAtualId), new FormData());
+
+    if (!dados.ok) {
+        erroEl.textContent = dados.erro;
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    closeDetalheRequisicaoModal();
+    carregarRequisicoes();
+    atualizarBadgeRequisicoes();
 }

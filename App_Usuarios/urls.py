@@ -258,6 +258,17 @@ urlpatterns = [
         farmacia_views.marcar_pendencia_prescricao,
         name="marcar_pendencia_prescricao"
     ),
+    path(
+        "modulos/farmacia/relatorios/stock/pdf/",
+        farmacia_views.relatorio_stock_pdf,
+        name="relatorio_stock_pdf"
+    ),
+
+    path(
+        "modulos/farmacia/relatorios/movimentos/pdf/",
+        farmacia_views.relatorio_movimentos_pdf,
+        name="relatorio_movimentos_pdf"
+    ),
 
     path(
         "modulos/configuracoes/",

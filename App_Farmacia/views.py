@@ -7,7 +7,14 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 
+from reportlab.platypus import Table, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+
 from App_Usuarios.permissoes import requer_permissao
+from App_Usuarios.utils.pdf import (
+    novo_documento_pdf, cabecalho_relatorio,
+    estilo_tabela_padrao, finalizar_resposta_pdf,
+)
 from App_Prescricoes.prescricao_medicamento import PrescricaoMedicamento
 from App_Pacientes.documento import DocumentoPaciente
 
@@ -15,6 +22,8 @@ from .medicamento import Medicamento
 from .lote import Lote
 from .movimento_stock import MovimentoStock
 from .dispensacao import Dispensacao, ItemDispensacao
+from .requisicao_interna import RequisicaoInterna
+from .item_requisicao_interna import ItemRequisicaoInterna
 
 
 # =========================================================================
@@ -739,3 +748,360 @@ def marcar_pendencia_prescricao(request, id):
     prescricao.save(update_fields=["status", "observacoes"])
 
     return JsonResponse({"ok": True, "mensagem": "Prescrição marcada como pendência."})
+
+
+# =========================================================================
+# REQUISIÇÕES INTERNAS (sector → Farmácia, sem paciente/prescrição)
+# =========================================================================
+
+@login_required
+@requer_permissao("requisicao_interna.cadastrar")
+def cadastrar_requisicao_interna(request):
+    """
+    Qualquer sector do hospital (enfermaria, internamento, etc.) pode
+    pedir medicamentos directamente à Farmácia. Mesmo padrão de
+    cadastrar_prescricao: cabeçalho + itens via arrays paralelos.
+    """
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    if not request.user.hospital:
+        return JsonResponse({"ok": False, "erro": "O seu utilizador não está vinculado a nenhum hospital."}, status=400)
+
+    origem = request.POST.get("requisicao_origem", "").strip()
+    observacoes = request.POST.get("requisicao_observacoes", "").strip()
+
+    medicamento_ids = request.POST.getlist("item_medicamento_id[]")
+    quantidades = request.POST.getlist("item_quantidade[]")
+
+    erros = []
+    if not origem:
+        erros.append("Sector de origem é obrigatório.")
+    if not medicamento_ids:
+        erros.append("Adicione pelo menos um medicamento à requisição.")
+
+    if erros:
+        return JsonResponse({"ok": False, "erro": " ".join(erros)}, status=400)
+
+    requisicao = RequisicaoInterna.objects.create(
+        hospital=request.user.hospital,
+        origem=origem,
+        solicitante=request.user,
+        observacoes=observacoes,
+        status=RequisicaoInterna.Status.PENDENTE,
+    )
+
+    itens_criados = 0
+    for i, medicamento_id in enumerate(medicamento_ids):
+        try:
+            medicamento = Medicamento.objects.get(id=medicamento_id)
+            quantidade = int(quantidades[i])
+            if quantidade <= 0:
+                continue
+        except (Medicamento.DoesNotExist, ValueError, IndexError):
+            continue
+
+        ItemRequisicaoInterna.objects.create(
+            requisicao=requisicao,
+            medicamento=medicamento,
+            quantidade_solicitada=quantidade,
+        )
+        itens_criados += 1
+
+    if itens_criados == 0:
+        requisicao.delete()
+        return JsonResponse({"ok": False, "erro": "Nenhum item válido foi enviado."}, status=400)
+
+    return JsonResponse({
+        "ok": True,
+        "mensagem": f"Requisição de {requisicao.origem} enviada à Farmácia.",
+        "requisicao_id": requisicao.id,
+    })
+
+
+@login_required
+@requer_permissao("requisicao_interna.gerir")
+def listar_requisicoes_internas(request):
+    if request.method != "GET":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    requisicoes = RequisicaoInterna.objects.filter(
+        hospital=request.user.hospital,
+        status=RequisicaoInterna.Status.PENDENTE,
+    ).select_related("solicitante").order_by("criado_em")
+
+    return JsonResponse({
+        "ok": True,
+        "requisicoes": [
+            {
+                "id": r.id,
+                "origem": r.origem,
+                "solicitante": r.solicitante.nome_completo,
+                "total_itens": r.itens.count(),
+                "criado_em": r.criado_em.isoformat(),
+            }
+            for r in requisicoes
+        ]
+    })
+
+
+@login_required
+@requer_permissao("requisicao_interna.gerir")
+def detalhe_requisicao_interna(request, id):
+    if request.method != "GET":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    try:
+        requisicao = RequisicaoInterna.objects.select_related("solicitante").get(
+            id=id, hospital=request.user.hospital
+        )
+    except RequisicaoInterna.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Requisição não encontrada."}, status=404)
+
+    itens = []
+    for item in requisicao.itens.select_related("medicamento").all():
+        stock_disponivel = Lote.objects.filter(
+            hospital=request.user.hospital,
+            medicamento=item.medicamento,
+            quantidade__gt=0,
+        ).aggregate(total=Sum("quantidade"))["total"] or 0
+
+        itens.append({
+            "id": item.id,
+            "medicamento": item.medicamento.nome,
+            "quantidade_solicitada": item.quantidade_solicitada,
+            "stock_disponivel": stock_disponivel,
+            "stock_suficiente": stock_disponivel >= item.quantidade_solicitada,
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "requisicao": {
+            "id": requisicao.id,
+            "origem": requisicao.origem,
+            "solicitante": requisicao.solicitante.nome_completo,
+            "status": requisicao.status,
+            "status_display": requisicao.get_status_display(),
+            "observacoes": requisicao.observacoes,
+            "criado_em": requisicao.criado_em.isoformat(),
+            "itens": itens,
+            "pode_entregar": bool(itens) and all(i["stock_suficiente"] for i in itens),
+        }
+    })
+
+
+@login_required
+@requer_permissao("requisicao_interna.gerir")
+@transaction.atomic
+def entregar_requisicao_interna(request, id):
+    """
+    Entrega TODOS os itens de uma vez, tudo-ou-nada — mesmo padrão de
+    dispensar_prescricao, mas sem paciente: a saída de stock fica
+    registada em nome do sector de origem (referência do MovimentoStock).
+    """
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    try:
+        requisicao = RequisicaoInterna.objects.get(id=id, hospital=request.user.hospital)
+    except RequisicaoInterna.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Requisição não encontrada."}, status=404)
+
+    if requisicao.status != RequisicaoInterna.Status.PENDENTE:
+        return JsonResponse({"ok": False, "erro": "Esta requisição já foi processada."}, status=400)
+
+    itens = list(requisicao.itens.select_related("medicamento").all())
+    if not itens:
+        return JsonResponse({"ok": False, "erro": "Esta requisição não tem nenhum item."}, status=400)
+
+    faltas = []
+    lotes_por_item = {}
+
+    for item in itens:
+        lotes = list(
+            Lote.objects.select_for_update()
+            .filter(hospital=request.user.hospital, medicamento=item.medicamento, quantidade__gt=0)
+            .order_by("validade")
+        )
+        total = sum(l.quantidade for l in lotes)
+        if total < item.quantidade_solicitada:
+            faltas.append(f"{item.medicamento.nome} (disponível {total}, necessário {item.quantidade_solicitada})")
+        lotes_por_item[item.id] = lotes
+
+    if faltas:
+        return JsonResponse({
+            "ok": False,
+            "erro": "Stock insuficiente para: " + "; ".join(faltas) + ". Nada foi entregue.",
+        }, status=400)
+
+    for item in itens:
+        restante = item.quantidade_solicitada
+        for lote in lotes_por_item[item.id]:
+            if restante <= 0:
+                break
+            retirar = min(lote.quantidade, restante)
+            lote.quantidade -= retirar
+            lote.save(update_fields=["quantidade"])
+
+            MovimentoStock.objects.create(
+                lote=lote,
+                tipo=MovimentoStock.Tipo.SAIDA,
+                quantidade=retirar,
+                utilizador=request.user,
+                referencia=f"Requisição Interna #{requisicao.id} — {requisicao.origem}",
+            )
+            restante -= retirar
+
+        item.quantidade_entregue = item.quantidade_solicitada
+        item.save(update_fields=["quantidade_entregue"])
+
+    requisicao.status = RequisicaoInterna.Status.ENTREGUE
+    requisicao.save(update_fields=["status"])
+
+    return JsonResponse({
+        "ok": True,
+        "mensagem": f"Requisição de {requisicao.origem} entregue com sucesso.",
+    })
+
+
+@login_required
+@requer_permissao("requisicao_interna.gerir")
+def rejeitar_requisicao_interna(request, id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    try:
+        requisicao = RequisicaoInterna.objects.get(id=id, hospital=request.user.hospital)
+    except RequisicaoInterna.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Requisição não encontrada."}, status=404)
+
+    if requisicao.status != RequisicaoInterna.Status.PENDENTE:
+        return JsonResponse({"ok": False, "erro": "Esta requisição já foi processada."}, status=400)
+
+    motivo = request.POST.get("motivo", "").strip()
+    requisicao.status = RequisicaoInterna.Status.REJEITADA
+    if motivo:
+        requisicao.observacoes = (requisicao.observacoes + f"\n[Rejeitada] {motivo}").strip()
+    requisicao.save(update_fields=["status", "observacoes"])
+
+    return JsonResponse({"ok": True, "mensagem": "Requisição rejeitada."})
+
+
+# =========================================================================
+# RELATÓRIOS PDF
+# =========================================================================
+
+@login_required
+@requer_permissao("lote.gerir")
+def relatorio_stock_pdf(request):
+    """Relatório de stock actual — um medicamento por linha, com estado (Ok/Crítico/Esgotado)."""
+
+    limiar_critico = 10
+
+    medicamentos = Medicamento.objects.filter(ativo=True).order_by("nome")
+    lotes_hospital = Lote.objects.filter(hospital=request.user.hospital, quantidade__gt=0)
+
+    stock_map = {}
+    for item in lotes_hospital.values("medicamento_id").annotate(total=Sum("quantidade")):
+        stock_map[item["medicamento_id"]] = item["total"]
+
+    styles = getSampleStyleSheet()
+
+    buffer, doc = novo_documento_pdf()
+    elementos = cabecalho_relatorio(
+        "Relatório de Stock — Farmácia",
+        request,
+        f"Total: {medicamentos.count()} medicamento(s)",
+    )
+
+    cabecalho_tabela = ["Nome", "Forma", "Concentração", "Stock Total", "Lotes Activos", "Estado"]
+    dados = [cabecalho_tabela]
+
+    for m in medicamentos:
+        total = stock_map.get(m.id, 0)
+        total_lotes = lotes_hospital.filter(medicamento=m).count()
+
+        if total == 0:
+            estado = "Esgotado"
+        elif total <= limiar_critico:
+            estado = "Crítico"
+        else:
+            estado = "Ok"
+
+        dados.append([
+            Paragraph(m.nome, styles["Normal"]),
+            m.get_forma_farmaceutica_display() if hasattr(m, "get_forma_farmaceutica_display") else "—",
+            m.concentracao or "—",
+            str(total),
+            str(total_lotes),
+            estado,
+        ])
+
+    if len(dados) == 1:
+        elementos.append(Paragraph("Nenhum medicamento cadastrado.", styles["Normal"]))
+    else:
+        tabela = Table(dados, repeatRows=1, colWidths=[55 * 3, 25 * 3, 25 * 3, 22 * 3, 22 * 3, 20 * 3])
+        tabela.setStyle(estilo_tabela_padrao())
+        elementos.append(tabela)
+
+    return finalizar_resposta_pdf(buffer, doc, elementos, "relatorio_stock_farmacia")
+
+
+@login_required
+@requer_permissao("lote.gerir")
+def relatorio_movimentos_pdf(request):
+    """
+    Relatório de movimentos de stock — mesmos filtros do modal
+    "Histórico" (medicamento/tipo/período), agora exportável em PDF.
+    """
+    movimentos = MovimentoStock.objects.filter(
+        lote__hospital=request.user.hospital
+    ).select_related("lote", "lote__medicamento", "utilizador").order_by("-criado_em")
+
+    medicamento_id = request.GET.get("medicamento_id", "").strip()
+    tipo = request.GET.get("tipo", "").strip().upper()
+    data_inicio = request.GET.get("data_inicio", "").strip()
+    data_fim = request.GET.get("data_fim", "").strip()
+
+    if medicamento_id:
+        movimentos = movimentos.filter(lote__medicamento_id=medicamento_id)
+    if tipo in MovimentoStock.Tipo.values:
+        movimentos = movimentos.filter(tipo=tipo)
+    if data_inicio:
+        movimentos = movimentos.filter(criado_em__date__gte=data_inicio)
+    if data_fim:
+        movimentos = movimentos.filter(criado_em__date__lte=data_fim)
+
+    movimentos = movimentos[:500]
+
+    styles = getSampleStyleSheet()
+
+    buffer, doc = novo_documento_pdf()
+    elementos = cabecalho_relatorio(
+        "Relatório de Movimentos — Farmácia",
+        request,
+        f"Total: {len(movimentos)} movimento(s)",
+    )
+
+    cabecalho_tabela = ["Data", "Medicamento", "Lote", "Tipo", "Qtd", "Utilizador", "Referência"]
+    dados = [cabecalho_tabela]
+
+    for m in movimentos:
+        dados.append([
+            timezone.localtime(m.criado_em).strftime("%d/%m/%Y %H:%M"),
+            Paragraph(m.lote.medicamento.nome, styles["Normal"]),
+            m.lote.numero_lote,
+            m.get_tipo_display(),
+            str(m.quantidade),
+            Paragraph(m.utilizador.nome_completo, styles["Normal"]),
+            Paragraph(m.referencia or "—", styles["Normal"]),
+        ])
+
+    if len(dados) == 1:
+        elementos.append(Paragraph("Nenhum movimento encontrado para os filtros aplicados.", styles["Normal"]))
+    else:
+        tabela = Table(dados, repeatRows=1, colWidths=[26 * 3, 30 * 3, 16 * 3, 14 * 3, 8 * 3, 26 * 3, 30 * 3])
+        tabela.setStyle(estilo_tabela_padrao())
+        elementos.append(tabela)
+
+    return finalizar_resposta_pdf(buffer, doc, elementos, "relatorio_movimentos_farmacia")

@@ -80,6 +80,17 @@
 </span>
 <input class="w-full h-10 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-700 focus:outline-none focus:border-[#F36A2D]" id="input-search-medicamento" oninput="filterMedicamentos(this.value)" placeholder="Pesquisa" type="text"/>
 </div>
+<!-- Relatórios PDF -->
+<a class="flex items-center justify-center gap-2 h-10 border border-gray-200 text-gray-600 hover:bg-gray-50 px-5 rounded-full font-medium text-sm transition" href="{% url 'relatorio_stock_pdf' %}" target="_blank">
+<i class="fa-solid fa-file-pdf text-red-500"></i>
+<span>Relatório Stock</span>
+</a>
+<!-- Requisições Internas Button -->
+<button class="flex items-center justify-center gap-2 h-10 border border-gray-200 text-gray-600 hover:bg-gray-50 px-5 rounded-full font-medium text-sm transition relative" onclick="openRequisicoesModal()">
+<i class="fa-solid fa-truck-medical"></i>
+<span>Requisições</span>
+<span class="bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center hidden" id="requisicoes-badge">0</span>
+</button>
 <!-- Receitas Button -->
 <button class="flex items-center justify-center gap-2 h-10 border border-gray-200 text-gray-600 hover:bg-gray-50 px-5 rounded-full font-medium text-sm transition relative" onclick="openReceitasModal()">
 <i class="fa-solid fa-file-prescription"></i>

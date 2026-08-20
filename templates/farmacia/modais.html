@@ -162,9 +162,14 @@
 <i class="fa-solid fa-clock-rotate-left text-lg"></i>
 <h3 class="font-bold text-lg">Histórico de Movimentos</h3>
 </div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="exportarHistoricoPdf()" title="Exportar PDF">
+<i class="fa-solid fa-file-pdf text-lg"></i>
+</button>
 <button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeHistoricoModal()">
 <i class="fa-solid fa-xmark text-lg"></i>
 </button>
+</div>
 </div>
 <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
 <!-- Filtros -->
@@ -309,6 +314,92 @@
 <button class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" onclick="fecharPendenciaReceita()" type="button">Cancelar</button>
 <button class="px-5 py-2.5 rounded-xl bg-gray-700 text-white text-sm font-medium hover:opacity-90 transition" onclick="confirmarPendenciaReceita()" type="button">Confirmar Pendência</button>
 </div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Modal: Fila de Requisições Internas -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-requisicoes">
+<div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-truck-medical text-lg"></i>
+<h3 class="font-bold text-lg">Requisições Internas</h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeRequisicoesModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<div class="p-6 max-h-[80vh] overflow-y-auto">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Origem</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Solicitante</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Itens</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Recebida em</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ação</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="requisicoes-body">
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="5">A carregar...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Modal: Detalhe da Requisição (verificação de stock + entregar) -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden" id="modal-detalhe-requisicao">
+<div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<div class="modal-header-acura flex items-center justify-between text-white">
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-truck-medical text-lg"></i>
+<h3 class="font-bold text-lg">Requisição de <span id="requisicao-origem-nome"></span></h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 transition" onclick="closeDetalheRequisicaoModal()">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+<div class="grid grid-cols-2 gap-4 bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+<div>
+<p class="text-xs text-gray-400">Solicitante</p>
+<p class="font-semibold text-gray-800" id="requisicao-info-solicitante">—</p>
+</div>
+<div>
+<p class="text-xs text-gray-400">Estado</p>
+<p class="font-semibold text-gray-800" id="requisicao-info-estado">—</p>
+</div>
+</div>
+
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100">
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Medicamento</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Qtd Solicitada</th>
+<th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Stock</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 text-sm text-gray-700" id="requisicao-itens-body">
+<tr><td class="py-6 px-4 text-center text-gray-400" colspan="3">A carregar...</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="hidden bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3" id="modalErroRequisicao"></div>
+
+<div class="pt-2 flex items-center justify-between border-t border-gray-100">
+<button class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" onclick="rejeitarRequisicao()" type="button">
+                        Rejeitar
+                    </button>
+<button class="px-6 py-2.5 rounded-xl bg-[#F36A2D] hover:opacity-90 text-white text-sm font-medium transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed" id="btnEntregarRequisicao" onclick="entregarRequisicao()" type="button">
+                        Entregar Requisição
+                    </button>
 </div>
 </div>
 </div>
