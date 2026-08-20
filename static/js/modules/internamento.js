@@ -1,4 +1,5 @@
-// static/js/modules/internamento.js                                                                       
+// static/js/modules/internamento.js
+
 const INTERNAMENTO_URLS = {
     naveCadastrar: "/modulos/internamento/naves/cadastrar/",
     naveEliminar: (id) => `/modulos/internamento/naves/${id}/eliminar/`,
@@ -6,6 +7,8 @@ const INTERNAMENTO_URLS = {
     quartoEliminar: (id) => `/modulos/internamento/quartos/${id}/eliminar/`,
     internados: "/modulos/internamento/internados/",
     darAlta: (id) => `/modulos/internamento/${id}/alta/`,
+    evolucoes: (internamentoId) => `/modulos/internamento/${internamentoId}/evolucoes/`,
+    cadastrarEvolucao: (internamentoId) => `/modulos/internamento/${internamentoId}/evolucoes/cadastrar/`,
     modulo: "/modulos/internamento/",
 };
 
@@ -187,6 +190,7 @@ async function carregarInternados() {
                 <td class="py-4 px-4 text-gray-500">${i.medico}</td>
                 <td class="py-4 px-4 text-gray-500 whitespace-nowrap">${internamentoFormatarDataHora(i.data_entrada)}</td>
                 <td class="py-4 px-4 text-right">
+                    <button class="bg-[#2D3250] hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="abrirEvolucao(${i.id}, '${i.paciente.replace(/'/g, "\\'")}')">Evolução</button>
                     <button class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2 rounded-full font-medium transition shadow-sm" onclick="confirmarAlta(${i.id}, '${i.paciente.replace(/'/g, "\\'")}')">Dar Alta</button>
                 </td>
             </tr>
@@ -217,4 +221,131 @@ async function confirmarAlta(id, nome) {
     carregarInternados();
     atualizarBadgeInternados();
     internamentoRecarregarPainel();
+}
+
+// -------------------------------------------------------------------------
+// Nova Requisição de Medicamentos à Farmácia
+// -------------------------------------------------------------------------
+
+function openRequisicaoInternaModal() {
+    document.getElementById("form-requisicao-interna").reset();
+    document.getElementById("itens-requisicao-interna").innerHTML = "";
+    document.getElementById("modalErroRequisicaoInterna").classList.add("hidden");
+    adicionarLinhaRequisicaoInterna();
+    document.getElementById("modal-requisicao-interna").classList.remove("hidden");
+}
+
+function closeRequisicaoInternaModal() {
+    document.getElementById("modal-requisicao-interna").classList.add("hidden");
+}
+
+function adicionarLinhaRequisicaoInterna() {
+    const template = document.getElementById("template-linha-requisicao-interna");
+    const clone = template.content.cloneNode(true);
+    document.getElementById("itens-requisicao-interna").appendChild(clone);
+}
+
+async function submitRequisicaoInterna(event) {
+    event.preventDefault();
+    const erroEl = document.getElementById("modalErroRequisicaoInterna");
+    erroEl.classList.add("hidden");
+
+    if (!document.getElementById("itens-requisicao-interna").children.length) {
+        erroEl.textContent = "Adicione pelo menos um medicamento.";
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    const dados = await internamentoEnviar("/modulos/farmacia/requisicoes/cadastrar/", new FormData(event.target));
+
+    if (!dados.ok) {
+        erroEl.textContent = dados.erro;
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    closeRequisicaoInternaModal();
+}
+
+// -------------------------------------------------------------------------
+// Evolução Clínica
+// -------------------------------------------------------------------------
+
+let evolucaoInternamentoId = null;
+
+const EVOLUCAO_CORES = {
+    MEDICA: "border-blue-200 bg-blue-50/40",
+    ENFERMAGEM: "border-teal-200 bg-teal-50/40",
+    OUTRA: "border-gray-200 bg-gray-50/40",
+};
+
+function abrirEvolucao(internamentoId, nomePaciente) {
+    evolucaoInternamentoId = internamentoId;
+    document.getElementById("evolucao-paciente-nome").textContent = nomePaciente;
+    document.getElementById("evolucao-texto").value = "";
+    document.getElementById("modalErroEvolucao").classList.add("hidden");
+    document.getElementById("modal-evolucao").classList.remove("hidden");
+    carregarEvolucoes();
+}
+
+function closeEvolucaoModal() {
+    document.getElementById("modal-evolucao").classList.add("hidden");
+    evolucaoInternamentoId = null;
+}
+
+async function carregarEvolucoes() {
+    const timeline = document.getElementById("evolucao-timeline");
+    timeline.innerHTML = `<p class="text-center text-gray-400 py-6">A carregar...</p>`;
+
+    try {
+        const resposta = await fetch(INTERNAMENTO_URLS.evolucoes(evolucaoInternamentoId));
+        const dados = await resposta.json();
+
+        if (!dados.ok || dados.evolucoes.length === 0) {
+            timeline.innerHTML = `<p class="text-center text-gray-400 py-6">Ainda sem notas de evolução.</p>`;
+            return;
+        }
+
+        timeline.innerHTML = dados.evolucoes.map((e) => `
+            <div class="border ${EVOLUCAO_CORES[e.tipo] || "border-gray-200"} rounded-xl p-3">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-bold text-gray-700">${e.tipo_display}</span>
+                    <span class="text-xs text-gray-400">${internamentoFormatarDataHora(e.criado_em)}</span>
+                </div>
+                <p class="text-sm text-gray-700">${e.texto}</p>
+                <p class="text-xs text-gray-400 mt-1">— ${e.profissional}</p>
+            </div>
+        `).join("");
+    } catch (erro) {
+        timeline.innerHTML = `<p class="text-center text-gray-400 py-6">Erro ao carregar evolução.</p>`;
+    }
+}
+
+async function submitEvolucao() {
+    const erroEl = document.getElementById("modalErroEvolucao");
+    erroEl.classList.add("hidden");
+
+    const texto = document.getElementById("evolucao-texto").value.trim();
+    if (!texto) {
+        erroEl.textContent = "Escreva a nota de evolução antes de guardar.";
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("evolucao_tipo", document.getElementById("evolucao-tipo").value);
+    formData.append("evolucao_texto", texto);
+
+    const dados = await internamentoEnviar(INTERNAMENTO_URLS.cadastrarEvolucao(evolucaoInternamentoId), formData);
+
+    if (!dados.ok) {
+        erroEl.textContent = dados.erro;
+        erroEl.classList.remove("hidden");
+        return;
+    }
+
+    window.showToast(dados.mensagem, "sucesso");
+    document.getElementById("evolucao-texto").value = "";
+    carregarEvolucoes();
 }

@@ -511,6 +511,17 @@ urlpatterns = [
         internamento_views.dar_alta,
         name="dar_alta"
     ),
+    path(
+        "modulos/internamento/<int:internamento_id>/evolucoes/",
+        internamento_views.listar_evolucoes,
+        name="listar_evolucoes"
+    ),
+
+    path(
+        "modulos/internamento/<int:internamento_id>/evolucoes/cadastrar/",
+        internamento_views.cadastrar_evolucao,
+        name="cadastrar_evolucao"
+    ),
 
 
 # 2) Sidebar:

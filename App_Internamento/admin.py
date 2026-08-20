@@ -3,6 +3,7 @@ from django.contrib import admin
 from .nave import Nave
 from .quarto import Quarto
 from .internamento import Internamento
+from .evolucao import Evolucao
 
 
 @admin.register(Nave)
@@ -21,6 +22,12 @@ class QuartoAdmin(admin.ModelAdmin):
     ordering = ("nave__nome", "numero")
 
 
+class EvolucaoInline(admin.TabularInline):
+    model = Evolucao
+    extra = 0
+    readonly_fields = ("criado_em",)
+
+
 @admin.register(Internamento)
 class InternamentoAdmin(admin.ModelAdmin):
     list_display = ("paciente", "quarto", "medico_responsavel", "status", "data_entrada", "data_alta")
@@ -28,3 +35,4 @@ class InternamentoAdmin(admin.ModelAdmin):
     search_fields = ("paciente__primeiro_nome", "paciente__ultimo_nome", "paciente__codigo")
     ordering = ("-data_entrada",)
     readonly_fields = ("data_entrada", "criado_em", "atualizado_em")
+    inlines = [EvolucaoInline]

@@ -3,12 +3,16 @@ from django.db.models import ProtectedError, Sum, Count, Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+
 from App_Usuarios.permissoes import requer_permissao
 from App_Atendimentos.atendimento import Atendimento
 from App_Pacientes.documento import DocumentoPaciente
+from App_Farmacia.medicamento import Medicamento
+
 from .nave import Nave
 from .quarto import Quarto
 from .internamento import Internamento
+from .evolucao import Evolucao
 
 
 def _contexto_painel_internamento(request):
@@ -39,6 +43,7 @@ def _contexto_painel_internamento(request):
         "total_vagas": max(total_capacidade - total_ocupados, 0),
         "total_internados": internados.count(),
         "quarto_tipos": Quarto.Tipo.choices,
+        "medicamentos": Medicamento.objects.filter(ativo=True).order_by("nome"),
     }
 
 
@@ -351,4 +356,90 @@ def dar_alta(request, id):
     return JsonResponse({
         "ok": True,
         "mensagem": f"Alta registada para {internamento.paciente.nome_completo}.",
+    })
+
+
+# =========================================================================
+# EVOLUÇÃO CLÍNICA (acompanhamento diário do internamento)
+# =========================================================================
+
+@login_required
+@requer_permissao("internamento.gerir")
+def listar_evolucoes(request, internamento_id):
+    """Histórico cronológico (mais recente primeiro) de um internamento."""
+    if request.method != "GET":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    try:
+        internamento = Internamento.objects.select_related("paciente", "quarto__nave").get(
+            id=internamento_id, hospital=request.user.hospital
+        )
+    except Internamento.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Internamento não encontrado."}, status=404)
+
+    evolucoes = internamento.evolucoes.select_related("profissional").all()
+
+    return JsonResponse({
+        "ok": True,
+        "internamento": {
+            "id": internamento.id,
+            "paciente": internamento.paciente.nome_completo,
+            "nave": internamento.quarto.nave.nome,
+            "quarto": internamento.quarto.numero,
+            "status": internamento.status,
+        },
+        "evolucoes": [
+            {
+                "id": e.id,
+                "tipo": e.tipo,
+                "tipo_display": e.get_tipo_display(),
+                "texto": e.texto,
+                "profissional": e.profissional.nome_completo,
+                "criado_em": e.criado_em.isoformat(),
+            }
+            for e in evolucoes
+        ]
+    })
+
+
+@login_required
+@requer_permissao("internamento.gerir")
+def cadastrar_evolucao(request, internamento_id):
+    """
+    Regista uma nova nota de evolução — nunca edita nem apaga notas
+    antigas, é sempre uma linha nova no histórico.
+    """
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "erro": "Método não permitido."}, status=405)
+
+    try:
+        internamento = Internamento.objects.get(id=internamento_id, hospital=request.user.hospital)
+    except Internamento.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "Internamento não encontrado."}, status=404)
+
+    if internamento.status != Internamento.Status.INTERNADO:
+        return JsonResponse({"ok": False, "erro": "Este paciente já não está internado."}, status=400)
+
+    tipo = request.POST.get("evolucao_tipo", "").strip().upper()
+    texto = request.POST.get("evolucao_texto", "").strip()
+
+    erros = []
+    if tipo not in Evolucao.Tipo.values:
+        erros.append("Tipo de evolução inválido.")
+    if not texto:
+        erros.append("A nota de evolução não pode estar vazia.")
+
+    if erros:
+        return JsonResponse({"ok": False, "erro": " ".join(erros)}, status=400)
+
+    Evolucao.objects.create(
+        internamento=internamento,
+        profissional=request.user,
+        tipo=tipo,
+        texto=texto,
+    )
+
+    return JsonResponse({
+        "ok": True,
+        "mensagem": "Evolução registada.",
     })
