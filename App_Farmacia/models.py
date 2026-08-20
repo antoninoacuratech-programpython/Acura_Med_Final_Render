@@ -7,6 +7,8 @@ from .medicamento import Medicamento
 from .lote import Lote
 from .movimento_stock import MovimentoStock
 from .dispensacao import Dispensacao, ItemDispensacao
+from .requisicao_interna import RequisicaoInterna
+from .item_requisicao_interna import ItemRequisicaoInterna
 
 __all__ = [
     "Medicamento",
@@ -14,4 +16,6 @@ __all__ = [
     "MovimentoStock",
     "Dispensacao",
     "ItemDispensacao",
+    "RequisicaoInterna",
+    "ItemRequisicaoInterna",
 ]
